@@ -93,6 +93,7 @@
         
         .badge { position: absolute; top: 8px; left: 55%; background: var(--accent); color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; }
 
+        /* Профиль и Бонусы */
         .balance-card {
             background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%);
             border-radius: 24px; padding: 30px 20px; color: white; text-align: center;
@@ -103,10 +104,41 @@
         .row-item { 
             background: var(--card-bg); padding: 16px; border-radius: 18px; 
             display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 10px;
+            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
-        input { 
+        .bonus-info-card {
+            background: var(--card-bg); border-radius: 18px; padding: 15px; margin-bottom: 20px;
+        }
+        .bonus-rule {
+            display: flex; align-items: center; gap: 12px; padding: 10px 0;
+            border-bottom: 0.5px solid var(--secondary);
+        }
+        .bonus-rule:last-child { border-bottom: none; }
+        .rule-icon { color: var(--accent); font-size: 18px; width: 25px; text-align: center; }
+        .rule-text { font-size: 14px; flex: 1; }
+        .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
+
+        /* Переключатель списания */
+        .bonus-toggle-container {
+            background: var(--card-bg); padding: 15px; border-radius: 18px;
+            margin: 15px 0; display: flex; justify-content: space-between;
+            align-items: center; border: 1px solid var(--secondary);
+        }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        input[type="text"] { 
             width: 100%; padding: 14px; border-radius: 15px; border: 1px solid var(--secondary); 
             background: var(--card-bg); margin-bottom: 15px; outline: none; box-sizing: border-box;
         }
@@ -135,15 +167,38 @@
     <div id="cart" class="page">
         <div class="header">Корзина</div>
         <div id="cartList"></div>
-        <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:20px; display: none; padding: 18px;" onclick="checkout()">Оформить заказ</button>
+        
+        <div id="bonusActionBlock" style="display:none">
+            <div class="bonus-toggle-container">
+                <div>
+                    <div style="font-weight:600; font-size:14px;">Списать бонусы</div>
+                    <div style="font-size:11px; color:var(--gray)">Доступно: <span id="availableBonuses">0</span> <i class="fas fa-leaf"></i></div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="useBonusesToggle" onchange="renderCart()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px;" onclick="checkout()">Оформить заказ</button>
     </div>
 
     <div id="profile" class="page">
         <div class="header">Мои бонусы</div>
         <div class="balance-card">
             <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase;">Баланс красоты</p>
-            <div class="balance-amount"><span id="userBalance">0</span> <i class="fas fa-leaf"></i></div>
+            <div class="balance-amount"><span id="userBalanceDisplay">0</span> <i class="fas fa-leaf"></i></div>
         </div>
+
+        <div class="category-title">Как получить бонусы</div>
+        <div class="bonus-info-card">
+            <div class="bonus-rule"><i class="fas fa-comment-dots rule-icon"></i><div class="rule-text">За отзыв</div><div class="rule-value">+25 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-shopping-bag rule-icon"></i><div class="rule-text">За покупку от 1 500 ₽</div><div class="rule-value">+50 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-crown rule-icon"></i><div class="rule-text">За покупку от 3 000 ₽</div><div class="rule-value">+125 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-gem rule-icon"></i><div class="rule-text">За покупку от 5 000 ₽</div><div class="rule-value">+175 <i class="fas fa-leaf"></i></div></div>
+        </div>
+
         <div class="category-title">Информация</div>
         <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
     </div>
@@ -166,13 +221,13 @@
 
         let products = [];
         let cart = [];
+        let userBalance = 0;
 
         async function loadProducts() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                 let text = await res.text();
                 text = text.replace(/^\uFEFF/, ''); 
-
                 const rows = text.split('\n').filter(row => row.trim() !== '');
                 const dataRows = rows.slice(1); 
                 
@@ -186,21 +241,16 @@
                         desc: cols[4],
                         stock: parseInt(cols[5]) || 0,
                         img: cols[6] || '',
-                        isHit: (cols[7] || '').toLowerCase() === 'yes' // Читаем 8-ю колонку
+                        isHit: (cols[7] || '').toLowerCase() === 'yes'
                     };
                 }).filter(p => p.id);
-
                 renderShop();
-            } catch (e) {
-                console.error("Ошибка загрузки:", e);
-            }
+            } catch (e) { console.error("Ошибка загрузки:", e); }
         }
 
         function renderShop() {
             const query = document.getElementById('itemSearch').value.toLowerCase();
             const filtered = products.filter(p => p.name.toLowerCase().includes(query));
-            
-            // Хиты: теперь фильтруем по колонке Hit (yes)
             const hitsGrid = document.getElementById('hitsGrid');
             const hits = products.filter(p => p.isHit); 
             
@@ -209,47 +259,25 @@
                 hitsGrid.innerHTML = hits.map(p => {
                     const inCart = cart.find(c => c.id === p.id);
                     const isFull = inCart && inCart.qty >= p.stock;
-                    return `
-                        <div class="hit-card" onclick="${isFull ? '' : `addToCart('${p.id}')`}" style="${isFull ? 'opacity:0.7' : ''}">
-                            <img src="${p.img || 'https://via.placeholder.com/300'}">
-                            <div class="hit-info">
-                                <div class="card-name">${p.name}</div>
-                                <div class="card-price">${p.price} ₽</div>
-                                <div style="font-size:10px; color:var(--accent)">${isFull ? 'Лимит в корзине' : 'Нажмите, чтобы добавить'}</div>
-                            </div>
-                        </div>
-                    `;
+                    return `<div class="hit-card" onclick="${isFull ? '' : `addToCart('${p.id}')`}" style="${isFull ? 'opacity:0.7' : ''}">
+                        <img src="${p.img || 'https://via.placeholder.com/300'}"><div class="hit-info">
+                        <div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div>
+                        <div style="font-size:10px; color:var(--accent)">${isFull ? 'Лимит в корзине' : 'Нажмите, чтобы добавить'}</div></div></div>`;
                 }).join('');
-            } else {
-                document.getElementById('hitsSection').style.display = 'none';
-            }
+            } else { document.getElementById('hitsSection').style.display = 'none'; }
 
             const renderGrid = (targetId, cat) => {
                 const grid = document.getElementById(targetId);
                 const items = filtered.filter(p => p.cat === cat);
-                
                 grid.innerHTML = items.map(p => {
                     const inCart = cart.find(c => c.id === p.id);
                     const isLimitReached = (inCart && inCart.qty >= p.stock) || p.stock < 1;
-                    
-                    return `
-                        <div class="card">
-                            <img src="${p.img || 'https://via.placeholder.com/300?text=Eco+Product'}">
-                            <div class="card-label">
-                                <div class="card-name">${p.name}</div>
-                                <div class="card-desc">${p.desc}</div>
-                                <div class="card-price">${p.price} ₽</div>
-                            </div>
-                            <button class="buy-btn" 
-                                ${isLimitReached ? 'disabled' : ''} 
-                                onclick="addToCart('${p.id}')">
-                                ${p.stock < 1 ? 'Ожидается' : (isLimitReached ? 'Достигнут лимит' : 'В корзину')}
-                            </button>
-                        </div>
-                    `;
+                    return `<div class="card"><img src="${p.img || 'https://via.placeholder.com/300?text=Eco+Product'}">
+                        <div class="card-label"><div class="card-name">${p.name}</div><div class="card-desc">${p.desc}</div><div class="card-price">${p.price} ₽</div></div>
+                        <button class="buy-btn" ${isLimitReached ? 'disabled' : ''} onclick="addToCart('${p.id}')">
+                        ${p.stock < 1 ? 'Ожидается' : (isLimitReached ? 'Достигнут лимит' : 'В корзину')}</button></div>`;
                 }).join('');
             };
-
             renderGrid('candlesGrid', 'candle');
             renderGrid('bodyGrid', 'body');
         }
@@ -257,19 +285,12 @@
         function addToCart(id) {
             const product = products.find(p => p.id == id);
             const inCart = cart.find(item => item.id == id);
-            const currentQty = inCart ? inCart.qty : 0;
-
-            if (currentQty >= product.stock) {
+            if (inCart && inCart.qty >= product.stock) {
                 tg.showAlert(`Извините, в наличии всего ${product.stock} шт.`);
                 return;
             }
-
-            if (inCart) inCart.qty++;
-            else cart.push({ ...product, qty: 1 });
-            
-            updateUI();
-            renderShop();
-            tg.HapticFeedback.impactOccurred('light');
+            if (inCart) inCart.qty++; else cart.push({ ...product, qty: 1 });
+            updateUI(); renderShop(); tg.HapticFeedback.impactOccurred('light');
         }
 
         function updateUI() {
@@ -281,69 +302,67 @@
 
         function renderCart() {
             const list = document.getElementById('cartList');
+            const bonusBlock = document.getElementById('bonusActionBlock');
             if (cart.length === 0) {
                 list.innerHTML = '<div style="text-align:center; padding:50px; color:var(--gray)">Корзина пуста</div>';
+                bonusBlock.style.display = 'none';
                 document.getElementById('orderBtn').style.display = 'none';
                 return;
             }
-            
-            const totalSum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            let totalSum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            bonusBlock.style.display = userBalance > 0 ? 'block' : 'none';
+            document.getElementById('availableBonuses').innerText = userBalance;
             document.getElementById('orderBtn').style.display = 'block';
 
-            list.innerHTML = cart.map((item, idx) => {
-                const product = products.find(p => p.id == item.id);
-                const isMax = item.qty >= product.stock;
-                
-                return `
+            let usedBonuses = 0;
+            if (document.getElementById('useBonusesToggle').checked) {
+                usedBonuses = Math.min(userBalance, totalSum);
+                totalSum -= usedBonuses;
+            }
+
+            list.innerHTML = cart.map((item, idx) => `
                 <div class="row-item">
-                    <div style="flex:1">
-                        <div style="font-weight:600">${item.name}</div>
-                        <div style="font-size:12px; color:var(--accent)">${item.price * item.qty} ₽</div>
-                    </div>
+                    <div style="flex:1"><div style="font-weight:600">${item.name}</div><div style="font-size:12px; color:var(--accent)">${item.price * item.qty} ₽</div></div>
                     <div style="display:flex; align-items:center; gap:10px">
                         <button class="qty-btn" onclick="changeQty(${idx}, -1)" style="border:none; background:var(--secondary); width:28px; height:28px; border-radius:8px;">-</button>
                         <span style="font-weight:bold; min-width:20px; text-align:center">${item.qty}</span>
-                        <button class="qty-btn" 
-                            ${isMax ? 'disabled' : ''} 
-                            onclick="changeQty(${idx}, 1)" 
-                            style="border:none; background:var(--secondary); width:28px; height:28px; border-radius:8px;">+</button>
+                        <button class="qty-btn" onclick="changeQty(${idx}, 1)" style="border:none; background:var(--secondary); width:28px; height:28px; border-radius:8px;">+</button>
                     </div>
-                </div>
-            `}).join('') + `
+                </div>`).join('') + `
                 <div style="margin-top:20px; padding:20px; background:var(--secondary); border-radius:20px; text-align:right;">
-                    <div style="font-size:12px; opacity:0.6">К оплате:</div>
-                    <div style="font-size:24px; font-weight:800; color:var(--accent);">${totalSum} ₽</div>
-                </div>
-            `;
+                    ${usedBonuses > 0 ? `<div style="font-size:12px; color:var(--accent); margin-bottom:5px;">Списано бонусов: -${usedBonuses} ₽</div>` : ''}
+                    <div style="font-size:12px; opacity:0.6">К оплате:</div><div style="font-size:24px; font-weight:800; color:var(--accent);">${totalSum} ₽</div>
+                </div>`;
         }
 
         function changeQty(idx, delta) {
             const item = cart[idx];
             const product = products.find(p => p.id == item.id);
-            
             if (delta > 0 && item.qty >= product.stock) {
-                tg.showAlert(`Больше нет в наличии (максимум: ${product.stock} шт.)`);
-                return;
+                tg.showAlert(`Больше нет в наличии`); return;
             }
-            
             item.qty += delta;
             if (item.qty <= 0) cart.splice(idx, 1);
-            
-            updateUI();
-            renderCart();
-            renderShop();
+            updateUI(); renderCart(); renderShop();
         }
 
         function checkout() {
-            let details = `🌿 **НОВЫЙ ЗАКАЗ**\n\n`;
             let total = 0;
+            let cartText = "";
             cart.forEach(item => {
-                details += `▪️ ${item.name} x${item.qty} — ${item.price * item.qty} ₽\n`;
+                cartText += `▪️ ${item.name} x${item.qty} — ${item.price * item.qty} ₽\n`;
                 total += item.price * item.qty;
             });
-            details += `\n💰 **ИТОГО: ${total} ₽**`;
+            let usedBonuses = 0;
+            if (document.getElementById('useBonusesToggle').checked) {
+                usedBonuses = Math.min(userBalance, total);
+                total -= usedBonuses;
+            }
+            let details = `🌿 **НОВЫЙ ЗАКАЗ**\n\n${cartText}`;
+            if (usedBonuses > 0) details += `\n✨ Списано бонусов: ${usedBonuses}`;
+            details += `\n💰 **К ОПЛАТЕ: ${total} ₽**`;
             
-            tg.sendData(JSON.stringify({ details: details }));
+            tg.sendData(JSON.stringify({ details: details, bonus_used: usedBonuses, final_sum: total }));
             tg.close();
         }
 
@@ -357,7 +376,8 @@
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            document.getElementById('userBalance').innerText = params.get('balance') || 0;
+            userBalance = parseInt(params.get('balance')) || 0;
+            document.getElementById('userBalanceDisplay').innerText = userBalance;
             document.getElementById('userIdDisplay').innerText = params.get('id') || "---";
             loadProducts();
         }
