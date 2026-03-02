@@ -55,14 +55,12 @@
             border-radius: 0 0 20px 20px; transition: 0.2s;
         }
         
-        /* Обновленное состояние кнопки: затемнение */
         .buy-btn:disabled { 
             background: var(--gray) !important; 
             opacity: 0.6; 
             cursor: not-allowed; 
         }
 
-        /* Стили для карусели хитов */
         .hits-container {
             display: flex;
             overflow-x: auto;
@@ -113,7 +111,6 @@
             background: var(--card-bg); margin-bottom: 15px; outline: none; box-sizing: border-box;
         }
         
-        /* Затемнение кнопки + в корзине */
         .qty-btn:disabled { opacity: 0.3; }
     </style>
 </head>
@@ -188,7 +185,8 @@
                         price: parseInt(cols[3]) || 0,
                         desc: cols[4],
                         stock: parseInt(cols[5]) || 0,
-                        img: cols[6] || ''
+                        img: cols[6] || '',
+                        isHit: (cols[7] || '').toLowerCase() === 'yes' // Читаем 8-ю колонку
                     };
                 }).filter(p => p.id);
 
@@ -202,9 +200,10 @@
             const query = document.getElementById('itemSearch').value.toLowerCase();
             const filtered = products.filter(p => p.name.toLowerCase().includes(query));
             
-            // Рендер карусели Хитов (берем первые 3 товара из таблицы)
+            // Хиты: теперь фильтруем по колонке Hit (yes)
             const hitsGrid = document.getElementById('hitsGrid');
-            const hits = products.slice(0, 3);
+            const hits = products.filter(p => p.isHit); 
+            
             if (hits.length > 0) {
                 document.getElementById('hitsSection').style.display = 'block';
                 hitsGrid.innerHTML = hits.map(p => {
@@ -221,6 +220,8 @@
                         </div>
                     `;
                 }).join('');
+            } else {
+                document.getElementById('hitsSection').style.display = 'none';
             }
 
             const renderGrid = (targetId, cat) => {
@@ -267,7 +268,7 @@
             else cart.push({ ...product, qty: 1 });
             
             updateUI();
-            renderShop(); // Обновляем кнопки на витрине
+            renderShop();
             tg.HapticFeedback.impactOccurred('light');
         }
 
@@ -330,7 +331,7 @@
             
             updateUI();
             renderCart();
-            renderShop(); // Обновляем кнопки на витрине при изменении в корзине
+            renderShop();
         }
 
         function checkout() {
