@@ -56,8 +56,15 @@
         .card-desc { font-size: 11px; color: var(--gray); margin-bottom: 8px; line-height: 1.3; }
         .card-price { font-weight: 700; color: var(--text); font-size: 16px; }
 
-        .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; }
+        /* Новое: Управление количеством на витрине */
+        .qty-control { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 0 0 20px 20px; height: 45px; overflow: hidden; }
+        .qty-ctrl-btn { flex: 1; height: 100%; border: none; background: none; font-size: 18px; font-weight: bold; color: var(--text); cursor: pointer; }
+        .qty-ctrl-btn:active { background: rgba(0,0,0,0.05); }
+        .qty-num { flex: 1; text-align: center; font-weight: 800; font-size: 15px; color: var(--accent); }
+
+        .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; height: 45px; }
         .buy-btn:disabled { background: var(--gray) !important; opacity: 0.6; }
+        .buy-btn.added { background-color: #6d755a !important; }
 
         /* Модальное окно */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(5px); justify-content: center; align-items: flex-end; }
@@ -70,6 +77,23 @@
         .modal-info { padding: 25px; }
         .modal-desc { white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 15px 0; opacity: 0.9; }
 
+        /* Профиль */
+        .balance-card { 
+            background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%); 
+            border-radius: 24px; padding: 40px 20px; /* Вернули размер */
+            color: white; text-align: center; margin-top: 10px; 
+            box-shadow: 0 10px 20px rgba(142,151,117,0.2);
+        }
+        .balance-amount { font-size: 42px; font-weight: 700; margin: 10px 0; }
+        
+        /* Условия бонусов */
+        .bonus-info-card { background: var(--card-bg); border-radius: 18px; padding: 15px; margin-bottom: 20px; }
+        .bonus-rule { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--secondary); }
+        .bonus-rule:last-child { border-bottom: none; }
+        .rule-icon { color: var(--accent); font-size: 18px; width: 25px; text-align: center; }
+        .rule-text { font-size: 14px; flex: 1; }
+        .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
+
         /* Остальное */
         .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
         .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -78,7 +102,6 @@
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--gray); position: relative; }
         .nav-btn.active { color: var(--accent); }
         .badge { position: absolute; top: 8px; left: 55%; background: var(--accent); color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; }
-        .balance-card { background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%); border-radius: 24px; padding: 30px 20px; color: white; text-align: center; margin-top: 10px; }
         .row-item { background: var(--card-bg); padding: 16px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .bonus-toggle-container { background: var(--card-bg); padding: 15px; border-radius: 18px; margin: 15px 0; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--secondary); }
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
@@ -139,15 +162,24 @@
                 </label>
             </div>
         </div>
-        <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px;" onclick="checkout()">Оформить заказ</button>
+        <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px; height: auto;" onclick="checkout()">Оформить заказ</button>
     </div>
 
     <div id="profile" class="page">
         <div class="header">Мои бонусы</div>
         <div class="balance-card">
-            <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase;">Баланс красоты</p>
+            <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Баланс красоты</p>
             <div class="balance-amount"><span id="userBalanceDisplay">0</span> <i class="fas fa-leaf"></i></div>
         </div>
+
+        <div class="category-title">Как получить бонусы</div>
+        <div class="bonus-info-card">
+            <div class="bonus-rule"><i class="fas fa-comment-dots rule-icon"></i><div class="rule-text">За отзыв</div><div class="rule-value">+25 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-shopping-bag rule-icon"></i><div class="rule-text">За покупку от 1 500 ₽</div><div class="rule-value">+50 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-crown rule-icon"></i><div class="rule-text">За покупку от 3 000 ₽</div><div class="rule-value">+125 <i class="fas fa-leaf"></i></div></div>
+            <div class="bonus-rule"><i class="fas fa-gem rule-icon"></i><div class="rule-text">За покупку от 5 000 ₽</div><div class="rule-value">+175 <i class="fas fa-leaf"></i></div></div>
+        </div>
+
         <div class="category-title">Информация</div>
         <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
     </div>
@@ -160,7 +192,7 @@
                 <div id="modalName" style="font-size:22px; font-weight:700;"></div>
                 <div id="modalPrice" style="font-size:18px; color:var(--accent); font-weight:700; margin-top:5px;"></div>
                 <div id="modalDesc" class="modal-desc"></div>
-                <button id="modalBuyBtn" class="buy-btn" style="border-radius:15px; padding:15px;"></button>
+                <button id="modalBuyBtn" class="buy-btn" style="border-radius:15px; padding:15px; height: auto;"></button>
             </div>
         </div>
     </div>
@@ -253,23 +285,40 @@
                 const items = filtered.filter(p => p.cat === cat);
                 document.getElementById(id).innerHTML = items.map(p => {
                     const inCart = cart.find(c => c.id === p.id);
-                    const isFull = (inCart && inCart.qty >= p.stock) || p.stock < 1;
                     const isFav = wishlist.includes(p.id);
+                    const isOutOfStock = p.stock < 1;
+
+                    // Логика кнопок управления
+                    let actionBlock = '';
+                    if (isOutOfStock) {
+                        actionBlock = `<button class="buy-btn" disabled>Ожидается</button>`;
+                    } else if (inCart) {
+                        const isLimit = inCart.qty >= p.stock;
+                        actionBlock = `
+                            <div class="qty-control">
+                                <button class="qty-ctrl-btn" onclick="updateItemQty('${p.id}', -1)">–</button>
+                                <span class="qty-num">${inCart.qty}</span>
+                                <button class="qty-ctrl-btn" ${isLimit ? 'disabled' : ''} onclick="updateItemQty('${p.id}', 1)">+</button>
+                            </div>`;
+                    } else {
+                        actionBlock = `<button id="btn-add-${p.id}" class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>`;
+                    }
+
                     return `<div class="card">
                         <button class="wishlist-btn ${isFav?'active':''}" onclick="toggleWish('${p.id}', event)">${isFav?'❤':'♡'}</button>
                         ${createGallery(p.imgList)}
                         <div class="card-label" onclick="openModal('${p.id}')">
                             <div class="card-name">${p.name}</div>
                             <div class="card-desc">${p.shortDesc}</div>
-                            <div class="card-price">${p.price} ₽</div>
+                            <div class="card-price">${p.price} ₽ ${inCart ? `<span style="color:var(--accent); font-size:10px; margin-left:5px;">(${inCart.qty} шт)</span>` : ''}</div>
                         </div>
-                        <button class="buy-btn" ${isFull?'disabled':''} onclick="addToCart('${p.id}')">${p.stock<1?'Ожидается':(isFull?'Лимит':'В корзину')}</button>
+                        ${actionBlock}
                     </div>`;
                 }).join('');
             };
 
             const hits = products.filter(p => p.isHit);
-            document.getElementById('hitsSection').style.display = hits.length ? 'block' : 'none';
+            document.getElementById('hitsSection').style.display = (hits.length && query === '') ? 'block' : 'none';
             document.getElementById('hitsGrid').innerHTML = hits.map(p => `
                 <div class="hit-card" onclick="openModal('${p.id}')">
                     <img src="${p.imgList[0]}">
@@ -284,8 +333,42 @@
             const p = products.find(x => x.id == id);
             const inCart = cart.find(x => x.id == id);
             if(inCart && inCart.qty >= p.stock) return;
+            
             if(inCart) inCart.qty++; else cart.push({...p, qty: 1});
-            updateUI(); renderShop(); tg.HapticFeedback.impactOccurred('light');
+            
+            // Визуальный отклик
+            const btn = document.getElementById(`btn-add-${id}`);
+            if(btn) {
+                btn.innerText = "Добавлено!";
+                btn.classList.add('added');
+                setTimeout(() => {
+                    renderShop(); 
+                }, 400);
+            } else {
+                renderShop();
+            }
+
+            updateUI();
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        // Новая функция для +/-
+        function updateItemQty(id, delta) {
+            const itemIdx = cart.findIndex(x => x.id === id);
+            const p = products.find(x => x.id === id);
+            
+            if (itemIdx !== -1) {
+                if (delta > 0 && cart[itemIdx].qty >= p.stock) {
+                    tg.showAlert("Достигнут лимит наличия");
+                    return;
+                }
+                cart[itemIdx].qty += delta;
+                if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
+            }
+            
+            updateUI();
+            renderShop();
+            tg.HapticFeedback.selectionChanged();
         }
 
         function updateUI() {
@@ -342,13 +425,15 @@
         function renderWishlist() {
             const favs = products.filter(p => wishlist.includes(p.id));
             document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
-            document.getElementById('wishlistGrid').innerHTML = favs.map(p => `
-                <div class="card">
+            document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
+                const inCart = cart.find(c => c.id === p.id);
+                return `<div class="card">
                     <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
-                    <img src="${p.imgList[0]}" onclick="openModal('${p.id}')">
+                    <img src="${p.imgList[0]}" onclick="openModal('${p.id}')" style="height:160px; object-fit:cover;">
                     <div class="card-label"><b>${p.name}</b><br>${p.price} ₽</div>
-                    <button class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>
-                </div>`).join('');
+                    <button class="buy-btn" onclick="addToCart('${p.id}')">${inCart ? 'Добавить еще' : 'В корзину'}</button>
+                </div>`
+            }).join('');
         }
 
         function checkout() {
@@ -371,6 +456,7 @@
             document.getElementById('btn-' + id).classList.add('active');
             if(id === 'cart') renderCart();
             if(id === 'wishlist') renderWishlist();
+            if(id === 'shop') renderShop();
         }
 
         window.onload = () => {
