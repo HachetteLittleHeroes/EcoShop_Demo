@@ -129,7 +129,6 @@
         tg.ready();
         tg.expand();
 
-        // ССЫЛКА НА ТВОЮ ТАБЛИЦУ (CSV)
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
 
         let products = [];
@@ -138,11 +137,17 @@
         async function loadProducts() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
-                const text = await res.text();
-                const rows = text.split('\n').slice(1); // Пропуск шапки
+                let text = await res.text();
                 
-                products = rows.map(row => {
-                    const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+                // Исправление для ID 1: удаляем BOM (невидимый символ в начале файла)
+                text = text.replace(/^\uFEFF/, ''); 
+
+                const rows = text.split('\n').filter(row => row.trim() !== '');
+                const dataRows = rows.slice(1); // Пропуск шапки
+                
+                products = dataRows.map(row => {
+                    // Разделение с учетом возможных кавычек в тексте
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/"/g, '').trim());
                     return {
                         id: cols[0],
                         cat: cols[1],
@@ -192,11 +197,19 @@
         function addToCart(id) {
             const product = products.find(p => p.id == id);
             const inCart = cart.find(item => item.id == id);
+            
+            // Проверка наличия (stock)
+            const currentQty = inCart ? inCart.qty : 0;
+            if (currentQty >= product.stock) {
+                tg.showAlert(`Извините, в наличии всего ${product.stock} шт.`);
+                return;
+            }
+
             if (inCart) inCart.qty++;
             else cart.push({ ...product, qty: 1 });
             
             updateUI();
-            tg.HapticFeedback.impactOccurred('medium');
+            tg.HapticFeedback.impactOccurred('light');
         }
 
         function updateUI() {
@@ -238,8 +251,18 @@
         }
 
         function changeQty(idx, delta) {
-            cart[idx].qty += delta;
-            if (cart[idx].qty <= 0) cart.splice(idx, 1);
+            const item = cart[idx];
+            const product = products.find(p => p.id == item.id);
+            
+            // Если пытаемся добавить больше, чем есть на складе
+            if (delta > 0 && item.qty >= product.stock) {
+                tg.showAlert(`Больше нет в наличии (максимум: ${product.stock} шт.)`);
+                return;
+            }
+            
+            item.qty += delta;
+            if (item.qty <= 0) cart.splice(idx, 1);
+            
             updateUI();
             renderCart();
         }
