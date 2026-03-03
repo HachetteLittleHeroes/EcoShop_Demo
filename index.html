@@ -257,7 +257,8 @@
                 products = rows.slice(1).map(cols => {
                     let imgs = cols[7] ? cols[7].split(',').map(s => s.trim()) : ['https://via.placeholder.com/300'];
                     // Обрабатываем \n, если вы его вводите вручную с телефона
-                    let description = (cols[5] || '').replace(/\\n/g, '\n');
+                    // Теперь код поймет и \n, и /n
+let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                     
                     return {
                         id: cols[0], cat: cols[1], name: cols[2], price: parseInt(cols[3]) || 0,
