@@ -252,7 +252,7 @@
             document.getElementById('modalGallery').innerHTML = p.imgList.map(u => `<img src="${u}">`).join('');
             document.getElementById('modalName').innerText = p.name;
             document.getElementById('modalPrice').innerText = p.price + ' ₽';
-            document.getElementById('modalDesc').innerText = p.fullDesc;
+            document.getElementById('modalDesc').innerText = p.fullDesc.replaceAll('\\n', '\n');
             
             const btn = document.getElementById('modalBuyBtn');
             const inCart = cart.find(c => c.id == id);
