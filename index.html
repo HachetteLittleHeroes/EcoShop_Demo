@@ -100,9 +100,54 @@
         .rule-text { font-size: 14px; flex: 1; }
         .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
 
-        .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
-        .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
-        .hit-card img { width: 120px; height: 120px; object-fit: cover; }
+        /* ОБНОВЛЕННЫЕ ХИТЫ */
+        .hits-container { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 12px; 
+            padding: 10px 5px 20px; 
+            scroll-snap-type: x mandatory; 
+        }
+        .hits-container::-webkit-scrollbar { display: none; }
+        
+        .hit-card { 
+            min-width: 160px; 
+            height: 220px; 
+            position: relative; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            flex-shrink: 0; 
+            scroll-snap-align: start;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+            cursor: pointer;
+        }
+        .hit-card img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .hit-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            color: white;
+            pointer-events: none;
+        }
+        .hit-info .card-name { 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hit-info .card-price { 
+            font-size: 12px; 
+            opacity: 0.9; 
+        }
         
         .nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(253, 250, 247, 0.95); backdrop-filter: blur(10px); display: flex; border-top: 0.5px solid var(--secondary); z-index: 999; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--gray); position: relative; }
@@ -260,7 +305,6 @@
 
                 products = rows.slice(1).map(cols => {
                     let imgs = cols[7] ? cols[7].split(',').map(s => s.trim()) : ['https://via.placeholder.com/300'];
-                    // Универсальная очистка описания
                     let description = (cols[5] || '')
                         .replace(/\\n/g, '\n')
                         .replace(/\/n/g, '\n');
@@ -278,7 +322,6 @@
             }
         }
 
-        // Обновленная функция галереи с точками и кликом по фото
         function createGallery(imgs, productId) {
             const dots = imgs.length > 1 ? 
                 `<div class="dots-container">${imgs.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
@@ -309,7 +352,6 @@
         function openModal(id) {
             const p = products.find(x => x.id == id);
             
-            // Галерея для модалки с точками
             const dots = p.imgList.length > 1 ? 
                 `<div class="dots-container">${p.imgList.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
             
@@ -393,7 +435,10 @@
             document.getElementById('hitsGrid').innerHTML = hits.map(p => `
                 <div class="hit-card" onclick="openModal('${p.id}')">
                     <img src="${p.imgList[0]}">
-                    <div class="hit-info" style="padding:12px"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
+                    <div class="hit-info">
+                        <div class="card-name">${p.name}</div>
+                        <div class="card-price">${p.price} ₽</div>
+                    </div>
                 </div>`).join('');
 
             renderGrid('candlesGrid', 'candle');
