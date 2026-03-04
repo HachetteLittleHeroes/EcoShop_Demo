@@ -19,12 +19,11 @@
         }
 
         html, body { 
-            height: 100%;
+            /* ПРАВКА: Убрал height: 100%, чтобы работал onscroll */
             width: 100%;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            overscroll-behavior-y: none; 
         }
 
         body { 
@@ -32,12 +31,12 @@
             background: var(--bg); 
             color: var(--text); 
             padding-bottom: 100px;
+            min-height: 100vh; /* ПРАВКА: Заменил height на min-height */
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        /* ПРАВКА: Стили загрузчика */
         #preloader {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -58,7 +57,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ПРАВКА: Скелетон-эффект */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -278,6 +276,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
+        // Используем ссылку, которую ты сохранял ранее
         const BONUS_API_URL = 'https://script.google.com/macros/s/AKfycbwNzGJlazpBtq9gtnGkF7c6zMoSh-gnse4XkL6GWEaIirV0mF8ZliIw48HT6A7oV4cqyw/exec';
 
         let products = [];
@@ -285,7 +284,6 @@
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
 
-        // ПРАВКА: Исправленный запуск с определением ID
         window.onload = async () => {
             tg.ready();
             tg.expand();
@@ -294,40 +292,55 @@
                 tg.isVerticalSwipesEnabled = false;
             }
 
-            // Пытаемся получить ID и бонусы
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                document.getElementById('userIdDisplay').innerText = user.id;
-                await loadUserBalance(user.id);
+            // ПРАВКА: Заглушка ID, если открыто не в Telegram, а в браузере (для тестов)
+            const userId = tg.initDataUnsafe?.user?.id || 'TEST_ID_123';
+            
+            if (tg.initDataUnsafe?.user?.id) {
+                document.getElementById('userIdDisplay').innerText = userId;
+            } else {
+                document.getElementById('userIdDisplay').innerText = "Тестовый режим (вне ТГ)";
             }
 
-            // Загружаем товары
+            await loadUserBalance(userId);
             await loadProducts();
         };
 
         async function loadUserBalance(userId) {
             try {
-                // ПРАВКА: Запрос к твоему скрипту для получения бонусов
-                const response = await fetch(`${BONUS_API_URL}?action=getBalance&userId=${userId}`);
-                const data = await response.json();
-                if (data.balance !== undefined) {
-                    userBalance = parseInt(data.balance) || 0;
-                    document.getElementById('userBalanceDisplay').innerText = userBalance;
-                    document.getElementById('availableBonuses').innerText = userBalance;
+                // ПРАВКА: Обязательно добавляем { redirect: 'follow' } для Google Apps Script
+                const response = await fetch(`${BONUS_API_URL}?action=getBalance&userId=${userId}`, {
+                    method: 'GET',
+                    redirect: 'follow' 
+                });
+                
+                // Читаем как текст, чтобы не сломаться, если скрипт вернет не JSON
+                const text = await response.text();
+                
+                try {
+                    const data = JSON.parse(text);
+                    userBalance = parseInt(data.balance || data.result || data) || 0;
+                } catch(e) {
+                    // Если вдруг GAS вернул просто число текстом
+                    userBalance = parseInt(text) || 0;
                 }
+
+                document.getElementById('userBalanceDisplay').innerText = userBalance;
+                document.getElementById('availableBonuses').innerText = userBalance;
             } catch (e) {
                 console.error("Бонусы не загружены:", e);
+                document.getElementById('userIdDisplay').innerText += " (ошибка сети)";
             }
         }
 
-        window.onscroll = function() {
+        // ПРАВКА: Заменили onscroll на addEventListener
+        window.addEventListener('scroll', () => {
             const btn = document.getElementById('backToTop');
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            if (window.scrollY > 200) {
                 btn.style.display = "flex";
             } else {
                 btn.style.display = "none";
             }
-        };
+        });
 
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
