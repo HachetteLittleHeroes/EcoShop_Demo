@@ -15,6 +15,7 @@
             --gray: #a6a6a6;
             --card-bg: #ffffff;
             --fav: #e74c3c;
+            --error: #e67e22; /* Цвет для индикации лимита */
         }
 
         body { 
@@ -43,13 +44,11 @@
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; position: relative; }
 
-        /* Галерея в карточке */
         .gallery-wrapper { position: relative; width: 100%; }
         .card-gallery { width: 100%; height: 160px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; cursor: pointer; }
         .card-gallery::-webkit-scrollbar { display: none; }
         .card-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
         
-        /* Точки-индикаторы */
         .dots-container {
             position: absolute; bottom: 8px; width: 100%;
             display: flex; justify-content: center; gap: 4px;
@@ -69,12 +68,12 @@
         .qty-control { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 0 0 20px 20px; height: 45px; overflow: hidden; }
         .qty-ctrl-btn { flex: 1; height: 100%; border: none; background: none; font-size: 18px; font-weight: bold; color: var(--text); cursor: pointer; }
         .qty-num { flex: 1; text-align: center; font-weight: 800; font-size: 15px; color: var(--accent); }
+        .qty-ctrl-btn:disabled { opacity: 0.3; }
 
         .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; height: 45px; }
         .buy-btn:disabled { background: var(--gray) !important; opacity: 0.6; }
         .buy-btn.added { background-color: #6d755a !important; }
 
-        /* Модальное окно */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(5px); justify-content: center; align-items: flex-end; }
         .modal.open { display: flex; animation: fadeIn 0.3s; }
         .modal-content { background: var(--bg); width: 100%; max-height: 90%; border-radius: 30px 30px 0 0; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; }
@@ -104,7 +103,6 @@
         .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
         .hit-card img { width: 120px; height: 120px; object-fit: cover; }
         
-        /* ОБНОВЛЕННАЯ НАВИГАЦИЯ */
         .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: rgba(253, 250, 247, 0.95); backdrop-filter: blur(10px); display: flex; border-top: 0.5px solid var(--secondary); z-index: 999; padding-bottom: env(safe-area-inset-bottom); }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--gray); position: relative; gap: 4px; transition: 0.2s; }
         .nav-icon { font-size: 22px; line-height: 1; }
@@ -309,7 +307,6 @@
 
         function openModal(id) {
             const p = products.find(x => x.id == id);
-            
             const dots = p.imgList.length > 1 ? 
                 `<div class="dots-container">${p.imgList.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
             
@@ -330,7 +327,7 @@
             const inCart = cart.find(c => c.id == id);
             const isFull = (inCart && inCart.qty >= p.stock) || p.stock < 1;
             
-            btn.innerText = p.stock < 1 ? 'Ожидается' : (isFull ? 'Лимит в корзине' : `В корзину - ${p.price} ₽`);
+            btn.innerText = p.stock < 1 ? 'Ожидается' : (isFull ? 'Лимит наличия' : `В корзину - ${p.price} ₽`);
             btn.disabled = isFull;
             btn.onclick = () => { addToCart(id); openModal(id); };
             
@@ -368,7 +365,7 @@
                         actionBlock = `
                             <div class="qty-control">
                                 <button class="qty-ctrl-btn" onclick="updateItemQty('${p.id}', -1)">–</button>
-                                <span class="qty-num">${inCart.qty}</span>
+                                <span class="qty-num" style="${isLimit ? 'color:var(--error); font-size:12px;' : ''}">${isLimit ? 'Лимит' : inCart.qty}</span>
                                 <button class="qty-ctrl-btn" ${isLimit ? 'disabled' : ''} onclick="updateItemQty('${p.id}', 1)">+</button>
                             </div>`;
                     } else {
@@ -423,8 +420,7 @@
             const p = products.find(x => x.id === id);
             if (itemIdx !== -1) {
                 if (delta > 0 && cart[itemIdx].qty >= p.stock) {
-                    tg.showAlert("Достигнут лимит наличия");
-                    return;
+                    return; // Просто выходим, блокировка срабатывает визуально через disabled
                 }
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
@@ -460,15 +456,24 @@
                 total -= usedB;
             }
 
-            list.innerHTML = cart.map((item, idx) => `
+            list.innerHTML = cart.map((item, idx) => {
+                const p = products.find(x => x.id == item.id);
+                const isLimit = item.qty >= p.stock;
+                return `
                 <div class="row-item">
-                    <div style="flex:1"><b>${item.name}</b><br><small>${item.price * item.qty} ₽</small></div>
-                    <div style="display:flex; align-items:center; gap:10px">
-                        <button onclick="changeQty(${idx}, -1)" style="border:none; width:28px; height:28px; border-radius:8px;">-</button>
-                        <span>${item.qty}</span>
-                        <button onclick="changeQty(${idx}, 1)" style="border:none; width:28px; height:28px; border-radius:8px;">+</button>
+                    <div style="flex:1">
+                        <b>${item.name}</b><br>
+                        <small>${item.price * item.qty} ₽</small>
                     </div>
-                </div>`).join('') + `
+                    <div style="display:flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <div style="display:flex; align-items:center; gap:10px">
+                            <button onclick="changeQty(${idx}, -1)" style="border:none; width:28px; height:28px; border-radius:8px;">-</button>
+                            <span style="${isLimit ? 'color:var(--error); font-weight:bold' : ''}">${item.qty}</span>
+                            <button onclick="changeQty(${idx}, 1)" ${isLimit ? 'disabled' : ''} style="border:none; width:28px; height:28px; border-radius:8px;">+</button>
+                        </div>
+                        ${isLimit ? `<span style="color:var(--error); font-size:10px; font-weight:600;">лимит наличия</span>` : ''}
+                    </div>
+                </div>`}).join('') + `
                 <div style="margin-top:20px; padding:20px; background:var(--secondary); border-radius:20px; text-align:right;">
                     ${usedB > 0 ? `<div style="color:var(--accent)">Бонусы: -${usedB}</div>` : ''}
                     <div style="font-size:24px; font-weight:800;">${total} ₽</div>
@@ -490,13 +495,16 @@
             document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
             document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
                 const inCart = cart.find(c => c.id === p.id);
+                const isLimit = inCart && inCart.qty >= p.stock;
                 return `<div class="card">
                     <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
                     <div style="height:160px" onclick="openModal('${p.id}')">
                         <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
-                    <button class="buy-btn" onclick="addToCart('${p.id}')">${inCart ? 'Добавить еще' : 'В корзину'}</button>
+                    <button class="buy-btn" ${isLimit ? 'disabled' : ''} onclick="addToCart('${p.id}')">
+                        ${isLimit ? 'Лимит' : (inCart ? 'Добавить еще' : 'В корзину')}
+                    </button>
                 </div>`
             }).join('');
         }
