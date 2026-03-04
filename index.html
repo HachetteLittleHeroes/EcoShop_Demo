@@ -44,10 +44,20 @@
         .card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; position: relative; }
 
         /* Галерея в карточке */
-        .card-gallery { width: 100%; height: 160px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .gallery-wrapper { position: relative; width: 100%; }
+        .card-gallery { width: 100%; height: 160px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; cursor: pointer; }
         .card-gallery::-webkit-scrollbar { display: none; }
         .card-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
         
+        /* Точки-индикаторы */
+        .dots-container {
+            position: absolute; bottom: 8px; width: 100%;
+            display: flex; justify-content: center; gap: 4px;
+            pointer-events: none; z-index: 5;
+        }
+        .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: 0.3s; }
+        .dot.active { background: #ffffff; transform: scale(1.2); }
+
         .wishlist-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.8); border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; color: var(--gray); backdrop-filter: blur(4px); }
         .wishlist-btn.active { color: var(--fav); }
 
@@ -56,10 +66,8 @@
         .card-desc { font-size: 11px; color: var(--gray); margin-bottom: 8px; line-height: 1.3; }
         .card-price { font-weight: 700; color: var(--text); font-size: 16px; }
 
-        /* Новое: Управление количеством на витрине */
         .qty-control { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 0 0 20px 20px; height: 45px; overflow: hidden; }
         .qty-ctrl-btn { flex: 1; height: 100%; border: none; background: none; font-size: 18px; font-weight: bold; color: var(--text); cursor: pointer; }
-        .qty-ctrl-btn:active { background: rgba(0,0,0,0.05); }
         .qty-num { flex: 1; text-align: center; font-weight: 800; font-size: 15px; color: var(--accent); }
 
         .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; height: 45px; }
@@ -72,32 +80,30 @@
         .modal-content { background: var(--bg); width: 100%; max-height: 90%; border-radius: 30px 30px 0 0; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .close-modal { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.7); border: none; width: 36px; height: 36px; border-radius: 50%; z-index: 2010; font-size: 20px; }
-        .modal-gallery { width: 100%; height: 300px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+        
+        .modal-gallery { width: 100%; height: 300px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; }
         .modal-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+        
         .modal-info { padding: 25px; }
         .modal-desc { white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 15px 0; opacity: 0.9; }
 
-        /* Профиль */
         .balance-card { 
             background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%); 
-            border-radius: 24px; padding: 40px 20px; /* Вернули размер */
-            color: white; text-align: center; margin-top: 10px; 
+            border-radius: 24px; padding: 40px 20px; color: white; text-align: center; margin-top: 10px; 
             box-shadow: 0 10px 20px rgba(142,151,117,0.2);
         }
         .balance-amount { font-size: 42px; font-weight: 700; margin: 10px 0; }
         
-        /* Условия бонусов */
         .bonus-info-card { background: var(--card-bg); border-radius: 18px; padding: 15px; margin-bottom: 20px; }
         .bonus-rule { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--secondary); }
-        .bonus-rule:last-child { border-bottom: none; }
         .rule-icon { color: var(--accent); font-size: 18px; width: 25px; text-align: center; }
         .rule-text { font-size: 14px; flex: 1; }
         .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
 
-        /* Остальное */
         .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
-        .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
         .hit-card img { width: 120px; height: 120px; object-fit: cover; }
+        
         .nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(253, 250, 247, 0.95); backdrop-filter: blur(10px); display: flex; border-top: 0.5px solid var(--secondary); z-index: 999; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--gray); position: relative; }
         .nav-btn.active { color: var(--accent); }
@@ -187,7 +193,7 @@
     <div id="productModal" class="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeModal()">×</button>
-            <div id="modalGallery" class="modal-gallery"></div>
+            <div id="modalGalleryContainer"></div>
             <div class="modal-info">
                 <div id="modalName" style="font-size:22px; font-weight:700;"></div>
                 <div id="modalPrice" style="font-size:18px; color:var(--accent); font-weight:700; margin-top:5px;"></div>
@@ -221,7 +227,6 @@
                 let text = await res.text();
                 text = text.replace(/^\uFEFF/, ''); 
                 
-                // Улучшенный парсинг CSV, который игнорирует переносы строк внутри кавычек
                 const rows = [];
                 let currentRow = [];
                 let currentField = '';
@@ -230,7 +235,6 @@
                 for (let i = 0; i < text.length; i++) {
                     const char = text[i];
                     const nextChar = text[i+1];
-
                     if (char === '"' && inQuotes && nextChar === '"') {
                         currentField += '"'; i++; 
                     } else if (char === '"') {
@@ -256,9 +260,10 @@
 
                 products = rows.slice(1).map(cols => {
                     let imgs = cols[7] ? cols[7].split(',').map(s => s.trim()) : ['https://via.placeholder.com/300'];
-                    // Обрабатываем \n, если вы его вводите вручную с телефона
-                    // Теперь код поймет и \n, и /n
-let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
+                    // Универсальная очистка описания
+                    let description = (cols[5] || '')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\/n/g, '\n');
                     
                     return {
                         id: cols[0], cat: cols[1], name: cols[2], price: parseInt(cols[3]) || 0,
@@ -272,8 +277,25 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                 console.error("Ошибка загрузки данных:", e); 
             }
         }
-        function createGallery(imgs) {
-            return `<div class="card-gallery">${imgs.map(url => `<img src="${url}">`).join('')}</div>`;
+
+        // Обновленная функция галереи с точками и кликом по фото
+        function createGallery(imgs, productId) {
+            const dots = imgs.length > 1 ? 
+                `<div class="dots-container">${imgs.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
+            
+            return `
+                <div class="gallery-wrapper">
+                    <div class="card-gallery" onclick="openModal('${productId}')" onscroll="updateDots(this)">
+                        ${imgs.map(url => `<img src="${url}">`).join('')}
+                    </div>
+                    ${dots}
+                </div>`;
+        }
+
+        function updateDots(el) {
+            const index = Math.round(el.scrollLeft / el.offsetWidth);
+            const dots = el.parentElement.querySelectorAll('.dot');
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
         }
 
         function toggleWish(id, e) {
@@ -286,10 +308,23 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
 
         function openModal(id) {
             const p = products.find(x => x.id == id);
-            document.getElementById('modalGallery').innerHTML = p.imgList.map(u => `<img src="${u}">`).join('');
+            
+            // Галерея для модалки с точками
+            const dots = p.imgList.length > 1 ? 
+                `<div class="dots-container">${p.imgList.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
+            
+            document.getElementById('modalGalleryContainer').innerHTML = `
+                <div class="gallery-wrapper" style="height:300px">
+                    <div class="modal-gallery" onscroll="updateDots(this)">
+                        ${p.imgList.map(u => `<img src="${u}">`).join('')}
+                    </div>
+                    ${dots}
+                </div>
+            `;
+
             document.getElementById('modalName').innerText = p.name;
             document.getElementById('modalPrice').innerText = p.price + ' ₽';
-            document.getElementById('modalDesc').innerText = p.fullDesc.replaceAll('\\n', '\n');
+            document.getElementById('modalDesc').innerText = p.fullDesc;
             
             const btn = document.getElementById('modalBuyBtn');
             const inCart = cart.find(c => c.id == id);
@@ -325,7 +360,6 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                     const isFav = wishlist.includes(p.id);
                     const isOutOfStock = p.stock < 1;
 
-                    // Логика кнопок управления
                     let actionBlock = '';
                     if (isOutOfStock) {
                         actionBlock = `<button class="buy-btn" disabled>Ожидается</button>`;
@@ -343,7 +377,7 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
 
                     return `<div class="card">
                         <button class="wishlist-btn ${isFav?'active':''}" onclick="toggleWish('${p.id}', event)">${isFav?'❤':'♡'}</button>
-                        ${createGallery(p.imgList)}
+                        ${createGallery(p.imgList, p.id)}
                         <div class="card-label" onclick="openModal('${p.id}')">
                             <div class="card-name">${p.name}</div>
                             <div class="card-desc">${p.shortDesc}</div>
@@ -359,7 +393,7 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
             document.getElementById('hitsGrid').innerHTML = hits.map(p => `
                 <div class="hit-card" onclick="openModal('${p.id}')">
                     <img src="${p.imgList[0]}">
-                    <div class="hit-info"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
+                    <div class="hit-info" style="padding:12px"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
                 </div>`).join('');
 
             renderGrid('candlesGrid', 'candle');
@@ -370,30 +404,23 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
             const p = products.find(x => x.id == id);
             const inCart = cart.find(x => x.id == id);
             if(inCart && inCart.qty >= p.stock) return;
-            
             if(inCart) inCart.qty++; else cart.push({...p, qty: 1});
             
-            // Визуальный отклик
             const btn = document.getElementById(`btn-add-${id}`);
             if(btn) {
                 btn.innerText = "Добавлено!";
                 btn.classList.add('added');
-                setTimeout(() => {
-                    renderShop(); 
-                }, 400);
+                setTimeout(() => { renderShop(); }, 400);
             } else {
                 renderShop();
             }
-
             updateUI();
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        // Новая функция для +/-
         function updateItemQty(id, delta) {
             const itemIdx = cart.findIndex(x => x.id === id);
             const p = products.find(x => x.id === id);
-            
             if (itemIdx !== -1) {
                 if (delta > 0 && cart[itemIdx].qty >= p.stock) {
                     tg.showAlert("Достигнут лимит наличия");
@@ -402,7 +429,6 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
             }
-            
             updateUI();
             renderShop();
             tg.HapticFeedback.selectionChanged();
@@ -466,8 +492,10 @@ let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                 const inCart = cart.find(c => c.id === p.id);
                 return `<div class="card">
                     <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
-                    <img src="${p.imgList[0]}" onclick="openModal('${p.id}')" style="height:160px; object-fit:cover;">
-                    <div class="card-label"><b>${p.name}</b><br>${p.price} ₽</div>
+                    <div style="height:160px" onclick="openModal('${p.id}')">
+                        <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
                     <button class="buy-btn" onclick="addToCart('${p.id}')">${inCart ? 'Добавить еще' : 'В корзину'}</button>
                 </div>`
             }).join('');
