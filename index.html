@@ -29,6 +29,29 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* Кнопка Наверх */
+        #backToTop {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(253, 250, 247, 0.85);
+            color: var(--accent);
+            border: 1px solid var(--secondary);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s, transform 0.3s;
+            font-size: 18px;
+        }
+        #backToTop:active { transform: scale(0.9); }
+
         /* Фильтры */
         .filter-container { display: flex; gap: 10px; padding: 10px 0 20px; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; background: var(--bg); z-index: 100; }
         .filter-container::-webkit-scrollbar { display: none; }
@@ -121,6 +144,8 @@
     </style>
 </head>
 <body>
+
+    <button id="backToTop" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
     <div id="shop" class="page active">
         <div class="header">Эко-лавка ✨</div>
@@ -221,6 +246,21 @@
         let cart = [];
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
+
+        // Логика кнопки "Наверх"
+        window.onscroll = function() {
+            const btn = document.getElementById('backToTop');
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                btn.style.display = "flex";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            tg.HapticFeedback.impactOccurred('light');
+        }
 
         async function loadProducts() {
             try {
@@ -420,7 +460,7 @@
             const p = products.find(x => x.id === id);
             if (itemIdx !== -1) {
                 if (delta > 0 && cart[itemIdx].qty >= p.stock) {
-                    return; // Просто выходим, блокировка срабатывает визуально через disabled
+                    return; 
                 }
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
