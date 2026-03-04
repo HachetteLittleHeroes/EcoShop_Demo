@@ -285,25 +285,37 @@
         let userBalance = 0;
 
         window.onload = async () => {
-            tg.ready();
-            tg.expand();
-            
-            if (tg.isVerticalSwipesEnabled !== undefined) {
-                tg.isVerticalSwipesEnabled = false;
-            }
+    // 1. Инициализируем Telegram жестко и сразу
+    tg.ready();
+    tg.expand();
+    
+    // 2. Отключаем свайп вниз программно (вместо CSS, чтобы не мешать скроллу)
+    if (tg.isVerticalSwipesEnabled !== undefined) {
+        tg.isVerticalSwipesEnabled = false;
+    }
 
-            // ПРАВКА: Заглушка ID, если открыто не в Telegram, а в браузере (для тестов)
-            const userId = tg.initDataUnsafe?.user?.id || 'TEST_ID_123';
-            
-            if (tg.initDataUnsafe?.user?.id) {
-                document.getElementById('userIdDisplay').innerText = userId;
-            } else {
-                document.getElementById('userIdDisplay').innerText = "Тестовый режим (вне ТГ)";
-            }
+    // 3. Берем ID напрямую из Telegram
+    const urlParams = new URLSearchParams(window.location.search);
+    let userId = tg.initDataUnsafe?.user?.id;
 
-            await loadUserBalance(userId);
-            await loadProducts();
-        };
+    // Резервный способ: иногда ID зашит в URL самого WebApp
+    if (!userId) {
+        console.log("Пытаюсь найти ID в параметрах строки...");
+        userId = urlParams.get('userId'); 
+    }
+
+    if (userId) {
+        document.getElementById('userIdDisplay').innerText = userId;
+        // Запускаем обновление баланса
+        await loadUserBalance(userId);
+    } else {
+        // Если ID всё еще нет — это главная причина нулей
+        document.getElementById('userIdDisplay').innerText = "Ошибка: ID не получен из TG";
+    }
+
+    await loadProducts();
+    document.getElementById('preloader').style.display = 'none';
+};
 
         async function loadUserBalance(userId) {
             try {
