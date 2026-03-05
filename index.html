@@ -16,6 +16,8 @@
             --card-bg: #ffffff;
             --fav: #e74c3c;
             --error: #e67e22;
+            /* Цвет для спокойной кнопки наверх */
+            --up-bg: rgba(242, 237, 228, 0.8); 
         }
 
         /* АНТИ-ТРЯСКА: Фиксация вьюпорта */
@@ -24,9 +26,9 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Запрещаем скролл самого body */
+            overflow: hidden; 
             background: var(--bg);
-            position: fixed; /* Жесткая фиксация для iOS */
+            position: fixed; 
         }
 
         /* Основной контейнер со своим скроллом */
@@ -37,7 +39,7 @@
             -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
-            touch-action: pan-y; /* Разрешаем только вертикальный скролл */
+            touch-action: pan-y; 
         }
 
         body { 
@@ -60,14 +62,20 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* КНОПКА НАВЕРХ */
+        /* ОБНОВЛЕННАЯ КНОПКА НАВЕРХ (МЕНЕЕ ЯРКАЯ) */
         #upBtn {
-            position: fixed; bottom: 90px; right: 20px;
-            background: var(--accent); color: white; border: none;
-            width: 45px; height: 45px; border-radius: 50%;
+            position: fixed; 
+            top: calc(15px + env(safe-area-inset-top)); 
+            right: 15px;
+            background: var(--up-bg); 
+            color: var(--text); 
+            border: 1px solid rgba(0,0,0,0.05);
+            width: 38px; height: 38px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            opacity: 0; pointer-events: none; transition: 0.3s; z-index: 998;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            opacity: 0; pointer-events: none; transition: 0.3s; 
+            z-index: 1500; font-size: 14px;
         }
         #upBtn.visible { opacity: 1; pointer-events: auto; }
 
@@ -173,7 +181,7 @@
         <div style="color: var(--accent); font-weight: 600;">Загружаем...</div>
     </div>
 
-    <button id="upBtn" onclick="toTop()"><i class="fas fa-arrow-up"></i></button>
+    <button id="upBtn" onclick="toTop()"><i class="fas fa-chevron-up"></i></button>
 
     <div id="mainContainer">
         <div id="shop" class="page active">
@@ -272,7 +280,6 @@
         tg.expand();
         tg.enableClosingConfirmation();
         
-        // НОВАЯ НАСТРОЙКА АНТИ-СВАЙП (если доступна в API)
         if (tg.setSettings) {
             tg.setSettings({ disable_vertical_swipes: true });
         }
@@ -284,7 +291,7 @@
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
 
-        // ОБНОВЛЕННАЯ ЛОГИКА КНОПКИ НАВЕРХ (слушаем mainContainer)
+        // Логика кнопки «Наверх»
         document.getElementById('mainContainer').addEventListener('scroll', (e) => {
             const upBtn = document.getElementById('upBtn');
             if (e.target.scrollTop > 300) upBtn.classList.add('visible');
@@ -571,17 +578,15 @@
             document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
             document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
                 const inCart = cart.find(c => c.id === p.id);
-                const isLimit = inCart && inCart.qty >= p.stock;
                 return `<div class="card">
                     <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
-                    <div style="height:160px" onclick="openModal('${p.id}')">
-                        <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
+                    ${createGallery(p.imgList, p.id)}
+                    <div class="card-label" onclick="openModal('${p.id}')">
+                        <div class="card-name">${p.name}</div>
+                        <div class="card-price">${p.price} ₽</div>
                     </div>
-                    <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
-                    <button class="buy-btn" ${isLimit ? 'disabled' : ''} onclick="addToCart('${p.id}')">
-                        ${isLimit ? 'Лимит' : (inCart ? 'Добавить еще' : 'В корзину')}
-                    </button>
-                </div>`
+                    <button class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>
+                </div>`;
             }).join('');
         }
 
@@ -590,21 +595,11 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('btn-' + id).classList.add('active');
-            
-            // Скроллим наверх именно основной контейнер
-            document.getElementById('mainContainer').scrollTo(0, 0);
-
             if(id === 'cart') renderCart();
             if(id === 'wishlist') renderWishlist();
         }
 
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            userBalance = parseInt(params.get('balance')) || 0;
-            document.getElementById('userBalanceDisplay').innerText = userBalance;
-            document.getElementById('userIdDisplay').innerText = params.get('id') || tg.initDataUnsafe.user?.id || "---";
-            loadProducts();
-        }
+        window.onload = loadProducts;
     </script>
 </body>
 </html>
