@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -18,9 +18,31 @@
             --error: #e67e22;
         }
 
+        /* АНТИ-ТРЯСКА: Фиксация вьюпорта */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Запрещаем скролл самого body */
+            background: var(--bg);
+            position: fixed; /* Жесткая фиксация для iOS */
+        }
+
+        /* Основной контейнер со своим скроллом */
+        #mainContainer {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            touch-action: pan-y; /* Разрешаем только вертикальный скролл */
+        }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
-            background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px;
+            color: var(--text);
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -50,7 +72,7 @@
         #upBtn.visible { opacity: 1; pointer-events: auto; }
 
         .header { padding: 25px 20px 10px; font-size: 26px; font-weight: 700; }
-        .page { display: none; padding: 0 15px; animation: fadeIn 0.3s ease; }
+        .page { display: none; padding: 0 15px 120px; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -153,73 +175,75 @@
 
     <button id="upBtn" onclick="toTop()"><i class="fas fa-arrow-up"></i></button>
 
-    <div id="shop" class="page active">
-        <div class="header">Эко-лавка ✨</div>
-        <input type="text" id="itemSearch" placeholder="Поиск товаров..." oninput="renderShop()">
-        
-        <div class="filter-container">
-            <button class="filter-btn active" onclick="filterCat('all', this)">Все</button>
-            <button class="filter-btn" onclick="filterCat('candle', this)">Свечи</button>
-            <button class="filter-btn" onclick="filterCat('body', this)">Уход</button>
-        </div>
+    <div id="mainContainer">
+        <div id="shop" class="page active">
+            <div class="header">Эко-лавка ✨</div>
+            <input type="text" id="itemSearch" placeholder="Поиск товаров..." oninput="renderShop()">
+            
+            <div class="filter-container">
+                <button class="filter-btn active" onclick="filterCat('all', this)">Все</button>
+                <button class="filter-btn" onclick="filterCat('candle', this)">Свечи</button>
+                <button class="filter-btn" onclick="filterCat('body', this)">Уход</button>
+            </div>
 
-        <div id="hitsSection" style="display:none">
-            <div class="category-title">Хиты сезона 🔥</div>
-            <div id="hitsGrid" class="hits-container"></div>
-        </div>
-        
-        <div id="section-candle" class="category-section">
-            <div class="category-title">Свечи ручной работы</div>
-            <div id="candlesGrid" class="grid"></div>
-        </div>
+            <div id="hitsSection" style="display:none">
+                <div class="category-title">Хиты сезона 🔥</div>
+                <div id="hitsGrid" class="hits-container"></div>
+            </div>
+            
+            <div id="section-candle" class="category-section">
+                <div class="category-title">Свечи ручной работы</div>
+                <div id="candlesGrid" class="grid"></div>
+            </div>
 
-        <div id="section-body" class="category-section">
-            <div class="category-title">Уход и SPA</div>
-            <div id="bodyGrid" class="grid"></div>
-        </div>
-    </div>
-
-    <div id="wishlist" class="page">
-        <div class="header">Избранное ♡</div>
-        <div id="wishlistGrid" class="grid"></div>
-        <div id="wishlistEmpty" style="text-align:center; padding:50px; color:var(--gray)">Тут пока пусто</div>
-    </div>
-
-    <div id="cart" class="page">
-        <div class="header">Корзина</div>
-        <div id="cartList"></div>
-        <div id="bonusActionBlock" style="display:none">
-            <div class="bonus-toggle-container">
-                <div>
-                    <div style="font-weight:600; font-size:14px;">Списать бонусы</div>
-                    <div style="font-size:11px; color:var(--gray)">Доступно: <span id="availableBonuses">0</span> <i class="fas fa-leaf"></i></div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="useBonusesToggle" onchange="renderCart()">
-                    <span class="slider"></span>
-                </label>
+            <div id="section-body" class="category-section">
+                <div class="category-title">Уход и SPA</div>
+                <div id="bodyGrid" class="grid"></div>
             </div>
         </div>
-        <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px; height: auto;" onclick="checkout()">Оформить заказ</button>
-    </div>
 
-    <div id="profile" class="page">
-        <div class="header">Мои бонусы</div>
-        <div class="balance-card">
-            <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Баланс красоты</p>
-            <div class="balance-amount"><span id="userBalanceDisplay">0</span> <i class="fas fa-leaf"></i></div>
+        <div id="wishlist" class="page">
+            <div class="header">Избранное ♡</div>
+            <div id="wishlistGrid" class="grid"></div>
+            <div id="wishlistEmpty" style="text-align:center; padding:50px; color:var(--gray)">Тут пока пусто</div>
         </div>
 
-        <div class="category-title">Как получить бонусы</div>
-        <div class="bonus-info-card">
-            <div class="bonus-rule"><i class="fas fa-comment-dots rule-icon"></i><div class="rule-text">За отзыв</div><div class="rule-value">+25 <i class="fas fa-leaf"></i></div></div>
-            <div class="bonus-rule"><i class="fas fa-shopping-bag rule-icon"></i><div class="rule-text">За покупку от 1 500 ₽</div><div class="rule-value">+50 <i class="fas fa-leaf"></i></div></div>
-            <div class="bonus-rule"><i class="fas fa-crown rule-icon"></i><div class="rule-text">За покупку от 3 000 ₽</div><div class="rule-value">+125 <i class="fas fa-leaf"></i></div></div>
-            <div class="bonus-rule"><i class="fas fa-gem rule-icon"></i><div class="rule-text">За покупку от 5 000 ₽</div><div class="rule-value">+175 <i class="fas fa-leaf"></i></div></div>
+        <div id="cart" class="page">
+            <div class="header">Корзина</div>
+            <div id="cartList"></div>
+            <div id="bonusActionBlock" style="display:none">
+                <div class="bonus-toggle-container">
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">Списать бонусы</div>
+                        <div style="font-size:11px; color:var(--gray)">Доступно: <span id="availableBonuses">0</span> <i class="fas fa-leaf"></i></div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="useBonusesToggle" onchange="renderCart()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px; height: auto;" onclick="checkout()">Оформить заказ</button>
         </div>
 
-        <div class="category-title">Информация</div>
-        <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
+        <div id="profile" class="page">
+            <div class="header">Мои бонусы</div>
+            <div class="balance-card">
+                <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Баланс красоты</p>
+                <div class="balance-amount"><span id="userBalanceDisplay">0</span> <i class="fas fa-leaf"></i></div>
+            </div>
+
+            <div class="category-title">Как получить бонусы</div>
+            <div class="bonus-info-card">
+                <div class="bonus-rule"><i class="fas fa-comment-dots rule-icon"></i><div class="rule-text">За отзыв</div><div class="rule-value">+25 <i class="fas fa-leaf"></i></div></div>
+                <div class="bonus-rule"><i class="fas fa-shopping-bag rule-icon"></i><div class="rule-text">За покупку от 1 500 ₽</div><div class="rule-value">+50 <i class="fas fa-leaf"></i></div></div>
+                <div class="bonus-rule"><i class="fas fa-crown rule-icon"></i><div class="rule-text">За покупку от 3 000 ₽</div><div class="rule-value">+125 <i class="fas fa-leaf"></i></div></div>
+                <div class="bonus-rule"><i class="fas fa-gem rule-icon"></i><div class="rule-text">За покупку от 5 000 ₽</div><div class="rule-value">+175 <i class="fas fa-leaf"></i></div></div>
+            </div>
+
+            <div class="category-title">Информация</div>
+            <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
+        </div>
     </div>
 
     <div id="productModal" class="modal" onclick="closeModal()">
@@ -246,7 +270,12 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); 
         tg.expand();
-        tg.enableClosingConfirmation(); // Защита от случайного закрытия
+        tg.enableClosingConfirmation();
+        
+        // НОВАЯ НАСТРОЙКА АНТИ-СВАЙП (если доступна в API)
+        if (tg.setSettings) {
+            tg.setSettings({ disable_vertical_swipes: true });
+        }
 
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
 
@@ -255,15 +284,15 @@
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
 
-        // ЛОГИКА КНОПКИ НАВЕРХ
-        window.addEventListener('scroll', () => {
+        // ОБНОВЛЕННАЯ ЛОГИКА КНОПКИ НАВЕРХ (слушаем mainContainer)
+        document.getElementById('mainContainer').addEventListener('scroll', (e) => {
             const upBtn = document.getElementById('upBtn');
-            if (window.scrollY > 300) upBtn.classList.add('visible');
+            if (e.target.scrollTop > 300) upBtn.classList.add('visible');
             else upBtn.classList.remove('visible');
         });
 
         function toTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('mainContainer').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function loadProducts() {
@@ -318,7 +347,6 @@
                 
                 renderShop();
                 
-                // СКРЫВАЕМ ЛОАДЕР ПОСЛЕ ЗАГРУЗКИ
                 const loader = document.getElementById('loader');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 400);
@@ -557,41 +585,25 @@
             }).join('');
         }
 
-        function checkout() {
-            let total = 0; let txt = "";
-            cart.forEach(i => { txt += `▪️ ${i.name} x${i.qty}\n`; total += i.price * i.qty; });
-            let ub = 0;
-            if(document.getElementById('useBonusesToggle').checked) {
-                ub = Math.min(userBalance, total);
-                total -= ub;
-            }
-            let details = `🌿 **ЗАКАЗ**\n${txt}${ub?`✨ Бонусы: ${ub}\n`:''}💰 **ИТОГО: ${total} ₽**`;
-            tg.sendData(JSON.stringify({ details: details, bonus_used: ub, final_sum: total }));
-            tg.close();
-        }
-
         function tab(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('btn-' + id).classList.add('active');
+            
+            // Скроллим наверх именно основной контейнер
+            document.getElementById('mainContainer').scrollTo(0, 0);
+
             if(id === 'cart') renderCart();
             if(id === 'wishlist') renderWishlist();
-            if(id === 'shop') renderShop();
-            window.scrollTo(0,0);
         }
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            // Получаем данные либо из URL, либо из Telegram
-            const userId = params.get('id') || (tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "---");
             userBalance = parseInt(params.get('balance')) || 0;
-            
             document.getElementById('userBalanceDisplay').innerText = userBalance;
-            document.getElementById('userIdDisplay').innerText = userId;
-            
-            loadProducts(); 
-            updateUI();
+            document.getElementById('userIdDisplay').innerText = params.get('id') || tg.initDataUnsafe.user?.id || "---";
+            loadProducts();
         }
     </script>
 </body>
