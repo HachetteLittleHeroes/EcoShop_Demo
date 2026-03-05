@@ -202,7 +202,7 @@
             <button id="orderBtn" class="buy-btn" style="border-radius: 18px; margin-top:10px; display: none; padding: 18px; height: auto;" onclick="checkout()">Оформить заказ</button>
         </div>
 
-        <div id="profile" class="page">
+          <div id="profile" class="page">
             <div class="header">Мои бонусы</div>
             <div class="balance-card">
                 <p style="margin:0; opacity:0.8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Баланс красоты</p>
@@ -218,30 +218,12 @@
             </div>
 
             <div class="category-title">Информация</div>
-                       <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
+            <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
         </div> 
 
         <div style="height: 120px; pointer-events: none;"></div>
 
-    </div> ```
-
-
-
-### Шаг 2: Проверка CSS
-Чтобы убедиться, что всё работает как часы, проверьте, что ваш стиль `#mainContainer` (в самом начале файла) выглядит так:
-
-```css
-        #mainContainer {
-            width: 100%; 
-            height: 100%; 
-            overflow-y: auto;
-            /* Этот padding гарантирует, что контент не прилипнет к краю */
-            padding-bottom: 20px; 
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y; 
-            overscroll-behavior-y: contain;
-        }
-    </div> 
+    </div>
 
     <div id="productModal" class="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -255,6 +237,7 @@
             </div>
         </div>
     </div>
+
 
     <nav class="nav">
         <button id="btn-shop" class="nav-btn active" onclick="tab('shop')"><span class="nav-icon">🌿</span>Витрина</button>
