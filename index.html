@@ -46,7 +46,8 @@
 
         #mainContainer {
             width: 100%; height: 100%; overflow-y: auto;
-            padding-bottom: 180px; /* ИСПРАВЛЕНО: Теперь точно пролистать до конца */
+            /* ИСПРАВЛЕНО: Увеличен отступ для гарантированной видимости нижних товаров */
+            padding-bottom: 240px; 
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y; overscroll-behavior-y: contain;
         }
@@ -101,8 +102,11 @@
         .modal-gallery { width: 100%; height: 300px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; }
         .modal-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
         
-        .modal-info { padding: 25px; }
+        .modal-info { padding: 25px; padding-bottom: 40px; }
         .modal-desc { white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 15px 0; opacity: 0.9; }
+
+        /* ИСПРАВЛЕНО: Стили для кнопок внутри модального окна */
+        #modalActionArea .buy-btn, #modalActionArea .qty-control { border-radius: 15px; height: 50px; }
 
         .balance-card { background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%); border-radius: 24px; padding: 40px 20px; color: white; text-align: center; margin-top: 10px; box-shadow: 0 10px 20px rgba(142,151,117,0.2); }
         .balance-amount { font-size: 42px; font-weight: 700; margin: 10px 0; }
@@ -113,7 +117,6 @@
         .rule-text { font-size: 14px; flex: 1; }
         .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
 
-        /* ИСПРАВЛЕНО: Новый стиль для хитов сезона */
         .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
         .hit-card { min-width: 300px; height: 130px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .hit-card img { width: 130px; height: 130px; object-fit: cover; flex-shrink: 0; cursor: pointer; }
@@ -224,7 +227,7 @@
                 <div id="modalName" style="font-size:22px; font-weight:700;"></div>
                 <div id="modalPrice" style="font-size:18px; color:var(--accent); font-weight:700; margin-top:5px;"></div>
                 <div id="modalDesc" class="modal-desc"></div>
-                <button id="modalBuyBtn" class="buy-btn" style="border-radius:15px; padding:15px; height: auto;"></button>
+                <div id="modalActionArea"></div>
             </div>
         </div>
     </div>
@@ -247,8 +250,8 @@
         let cart = [];
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
+        let activeModalId = null; // Для отслеживания открытого окна
 
-        // --- ЛОГИКА КНОПКИ НАВЕРХ ---
         const mainContainer = document.getElementById('mainContainer');
         const btt = document.getElementById('backToTop');
         mainContainer.onscroll = () => {
@@ -257,8 +260,8 @@
         };
         function scrollToTop() { mainContainer.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-        // --- УНИВЕРСАЛЬНЫЙ БЛОК ДЕЙСТВИЙ (ИСПРАВЛЕНО: для хитов и витрины) ---
-        function getActionBlock(p, isHit = false) {
+        // --- УНИВЕРСАЛЬНЫЙ БЛОК ДЕЙСТВИЙ ---
+        function getActionBlock(p) {
             const inCart = cart.find(c => c.id === p.id);
             if (p.stock < 1) return `<button class="buy-btn" disabled>Ожидается</button>`;
             
@@ -271,7 +274,7 @@
                         <button class="qty-ctrl-btn" ${isLimit ? 'disabled' : ''} onclick="updateItemQty('${p.id}', 1)">+</button>
                     </div>`;
             }
-            return `<button id="btn-add-${p.id}" class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>`;
+            return `<button class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>`;
         }
 
         async function initApp() {
@@ -371,7 +374,9 @@
             renderShop(); updateUI(); tg.HapticFeedback.selectionChanged();
         }
 
+        // ИСПРАВЛЕНО: Улучшенная функция модального окна
         function openModal(id) {
+            activeModalId = id;
             const p = products.find(x => x.id == id);
             const dots = p.imgList.length > 1 ? 
                 `<div class="dots-container">${p.imgList.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
@@ -382,26 +387,23 @@
                         ${p.imgList.map(u => `<img src="${u}">`).join('')}
                     </div>
                     ${dots}
-                </div>
-            `;
+                </div>`;
 
             document.getElementById('modalName').innerText = p.name;
             document.getElementById('modalPrice').innerText = p.price + ' ₽';
             document.getElementById('modalDesc').innerText = p.fullDesc;
             
-            const btn = document.getElementById('modalBuyBtn');
-            const inCart = cart.find(c => c.id == id);
-            const isFull = (inCart && inCart.qty >= p.stock) || p.stock < 1;
-            
-            btn.innerText = p.stock < 1 ? 'Ожидается' : (isFull ? 'Лимит наличия' : `В корзину - ${p.price} ₽`);
-            btn.disabled = isFull;
-            btn.onclick = () => { addToCart(id); openModal(id); };
+            // Загружаем кнопки в модалку
+            document.getElementById('modalActionArea').innerHTML = getActionBlock(p);
             
             document.getElementById('productModal').classList.add('open');
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function closeModal() { document.getElementById('productModal').classList.remove('open'); }
+        function closeModal() { 
+            document.getElementById('productModal').classList.remove('open'); 
+            activeModalId = null;
+        }
 
         function filterCat(cat, btn) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -445,7 +447,7 @@
                                 <div class="card-name">${p.name}</div>
                                 <div class="card-price">${p.price} ₽</div>
                             </div>
-                            ${getActionBlock(p, true)}
+                            ${getActionBlock(p)}
                         </div>
                     </div>`).join('');
             }
@@ -459,7 +461,6 @@
             const inCart = cart.find(x => x.id == id);
             if(inCart && inCart.qty >= p.stock) return;
             if(inCart) inCart.qty++; else cart.push({...p, qty: 1});
-            
             refreshUI();
             tg.HapticFeedback.impactOccurred('light');
         }
@@ -479,6 +480,12 @@
             renderShop();
             if (document.getElementById('wishlist').classList.contains('active')) renderWishlist();
             if (document.getElementById('cart').classList.contains('active')) renderCart();
+            
+            // ИСПРАВЛЕНО: Обновление кнопок в модальном окне, если оно открыто
+            if (activeModalId) {
+                const p = products.find(x => x.id == activeModalId);
+                document.getElementById('modalActionArea').innerHTML = getActionBlock(p);
+            }
         }
 
         function updateUI() {
@@ -544,7 +551,7 @@
             if(d > 0 && item.qty >= p.stock) return;
             item.qty += d;
             if(item.qty <= 0) cart.splice(idx, 1);
-            updateUI(); renderCart(); renderShop();
+            refreshUI();
         }
 
         function renderWishlist() {
