@@ -46,58 +46,73 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ... Остальные стили без изменений ... */
         .filter-container { display: flex; gap: 10px; padding: 10px 0 20px; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; background: var(--bg); z-index: 100; }
         .filter-container::-webkit-scrollbar { display: none; }
         .filter-btn { padding: 10px 20px; border-radius: 25px; border: 1px solid var(--secondary); background: var(--card-bg); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
         .category-title { margin: 25px 0 15px; font-size: 13px; color: var(--accent); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid var(--secondary); padding-bottom: 5px; }
+
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; position: relative; }
+
         .gallery-wrapper { position: relative; width: 100%; }
         .card-gallery { width: 100%; height: 160px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; cursor: pointer; }
         .card-gallery::-webkit-scrollbar { display: none; }
         .card-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+        
         .dots-container { position: absolute; bottom: 8px; width: 100%; display: flex; justify-content: center; gap: 4px; pointer-events: none; z-index: 5; }
         .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: 0.3s; }
         .dot.active { background: #ffffff; transform: scale(1.2); }
+
         .wishlist-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.8); border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; color: var(--gray); backdrop-filter: blur(4px); }
         .wishlist-btn.active { color: var(--fav); }
+
         .card-label { padding: 12px; flex-grow: 1; cursor: pointer; }
         .card-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
         .card-desc { font-size: 11px; color: var(--gray); margin-bottom: 8px; line-height: 1.3; }
         .card-price { font-weight: 700; color: var(--text); font-size: 16px; }
+
         .qty-control { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 0 0 20px 20px; height: 45px; overflow: hidden; }
         .qty-ctrl-btn { flex: 1; height: 100%; border: none; background: none; font-size: 18px; font-weight: bold; color: var(--text); cursor: pointer; }
         .qty-num { flex: 1; text-align: center; font-weight: 800; font-size: 15px; color: var(--accent); }
         .qty-ctrl-btn:disabled { opacity: 0.3; }
+
         .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; height: 45px; }
         .buy-btn:disabled { background: var(--gray) !important; opacity: 0.6; }
         .buy-btn.added { background-color: #6d755a !important; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(5px); justify-content: center; align-items: flex-end; }
         .modal.open { display: flex; animation: fadeIn 0.3s; }
         .modal-content { background: var(--bg); width: 100%; max-height: 90%; border-radius: 30px 30px 0 0; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .close-modal { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.7); border: none; width: 36px; height: 36px; border-radius: 50%; z-index: 2010; font-size: 20px; }
+        
         .modal-gallery { width: 100%; height: 300px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; }
         .modal-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+        
         .modal-info { padding: 25px; }
         .modal-desc { white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 15px 0; opacity: 0.9; }
+
         .balance-card { background: linear-gradient(135deg, #8e9775 0%, #6d755a 100%); border-radius: 24px; padding: 40px 20px; color: white; text-align: center; margin-top: 10px; box-shadow: 0 10px 20px rgba(142,151,117,0.2); }
         .balance-amount { font-size: 42px; font-weight: 700; margin: 10px 0; }
+        
         .bonus-info-card { background: var(--card-bg); border-radius: 18px; padding: 15px; margin-bottom: 20px; }
         .bonus-rule { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--secondary); }
         .rule-icon { color: var(--accent); font-size: 18px; width: 25px; text-align: center; }
         .rule-text { font-size: 14px; flex: 1; }
         .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
+
         .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
         .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
         .hit-card img { width: 120px; height: 120px; object-fit: cover; }
+        
         .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: rgba(253, 250, 247, 0.95); backdrop-filter: blur(10px); display: flex; border-top: 0.5px solid var(--secondary); z-index: 999; padding-bottom: env(safe-area-inset-bottom); }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--gray); position: relative; gap: 4px; transition: 0.2s; }
         .nav-icon { font-size: 22px; line-height: 1; }
         .nav-btn.active { color: var(--accent); transform: scale(1.05); }
         .badge { position: absolute; top: 6px; left: 58%; background: var(--accent); color: white; border-radius: 10px; padding: 2px 7px; font-size: 10px; font-weight: bold; border: 2px solid var(--bg); }
+
         .row-item { background: var(--card-bg); padding: 16px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .bonus-toggle-container { background: var(--card-bg); padding: 15px; border-radius: 18px; margin: 15px 0; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--secondary); }
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
@@ -184,7 +199,9 @@
             <div class="category-title">Информация</div>
             <div class="row-item"><span>Ваш ID:</span><b id="userIdDisplay">---</b></div>
         </div>
-    </div> <div id="productModal" class="modal" onclick="closeModal()">
+    </div> 
+
+    <div id="productModal" class="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeModal()">×</button>
             <div id="modalGalleryContainer"></div>
@@ -207,7 +224,6 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
-        // Правка: Отключаем системное окно подтверждения закрытия
         tg.disableClosingConfirmation();
 
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
@@ -216,6 +232,22 @@
         let cart = [];
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
+
+        // --- НОВАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ ---
+        async function initApp() {
+            try {
+                await loadProducts(); // Ждем загрузки товаров
+            } catch (err) {
+                console.error("Ошибка при инициализации:", err);
+            } finally {
+                // Скрываем лоадер в любом случае (даже если ошибка)
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => { loader.style.display = 'none'; }, 500);
+                }
+            }
+        }
 
         async function loadProducts() {
             try {
@@ -381,12 +413,15 @@
             };
 
             const hits = products.filter(p => p.isHit);
-            document.getElementById('hitsSection').style.display = (hits.length && query === '') ? 'block' : 'none';
-            document.getElementById('hitsGrid').innerHTML = hits.map(p => `
-                <div class="hit-card" onclick="openModal('${p.id}')">
-                    <img src="${p.imgList[0]}">
-                    <div class="hit-info" style="padding:12px"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
-                </div>`).join('');
+            const hitsSection = document.getElementById('hitsSection');
+            if (hitsSection) {
+                hitsSection.style.display = (hits.length && query === '') ? 'block' : 'none';
+                document.getElementById('hitsGrid').innerHTML = hits.map(p => `
+                    <div class="hit-card" onclick="openModal('${p.id}')">
+                        <img src="${p.imgList[0]}">
+                        <div class="hit-info" style="padding:12px"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
+                    </div>`).join('');
+            }
 
             renderGrid('candlesGrid', 'candle');
             renderGrid('bodyGrid', 'body');
@@ -427,10 +462,16 @@
 
         function updateUI() {
             const cCount = cart.reduce((s, i) => s + i.qty, 0);
-            document.getElementById('cartBadge').innerText = cCount;
-            document.getElementById('cartBadge').style.display = cCount > 0 ? 'block' : 'none';
-            document.getElementById('wishBadge').innerText = wishlist.length;
-            document.getElementById('wishBadge').style.display = wishlist.length > 0 ? 'block' : 'none';
+            const cartBadge = document.getElementById('cartBadge');
+            const wishBadge = document.getElementById('wishBadge');
+            if (cartBadge) {
+                cartBadge.innerText = cCount;
+                cartBadge.style.display = cCount > 0 ? 'block' : 'none';
+            }
+            if (wishBadge) {
+                wishBadge.innerText = wishlist.length;
+                wishBadge.style.display = wishlist.length > 0 ? 'block' : 'none';
+            }
         }
 
         function renderCart() {
@@ -532,7 +573,10 @@
             userBalance = parseInt(params.get('balance')) || 0;
             document.getElementById('userBalanceDisplay').innerText = userBalance;
             document.getElementById('userIdDisplay').innerText = params.get('id') || "---";
-            initApp(); updateUI();
+            
+            // Запускаем инициализацию (загрузку товаров и скрытие лоадера)
+            initApp(); 
+            updateUI();
         }
     </script>
 </body>
