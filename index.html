@@ -277,19 +277,48 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready(); 
-        tg.expand();
-        
-        if (tg.isVerticalSwipesEnabled !== undefined) {
-            tg.isVerticalSwipesEnabled = false;
-        }
-
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
+        const BONUS_API_URL = 'https://script.google.com/macros/s/AKfycbwNzGJlazpBtq9gtnGkF7c6zMoSh-gnse4XkL6GWEaIirV0mF8ZliIw48HT6A7oV4cqyw/exec';
 
         let products = [];
         let cart = [];
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
+
+        // ПРАВКА: Исправленный запуск с определением ID
+        window.onload = async () => {
+            tg.ready();
+            tg.expand();
+            
+            if (tg.isVerticalSwipesEnabled !== undefined) {
+                tg.isVerticalSwipesEnabled = false;
+            }
+
+            // Пытаемся получить ID и бонусы
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                document.getElementById('userIdDisplay').innerText = user.id;
+                await loadUserBalance(user.id);
+            }
+
+            // Загружаем товары
+            await loadProducts();
+        };
+
+        async function loadUserBalance(userId) {
+            try {
+                // ПРАВКА: Запрос к твоему скрипту для получения бонусов
+                const response = await fetch(`${BONUS_API_URL}?action=getBalance&userId=${userId}`);
+                const data = await response.json();
+                if (data.balance !== undefined) {
+                    userBalance = parseInt(data.balance) || 0;
+                    document.getElementById('userBalanceDisplay').innerText = userBalance;
+                    document.getElementById('availableBonuses').innerText = userBalance;
+                }
+            } catch (e) {
+                console.error("Бонусы не загружены:", e);
+            }
+        }
 
         window.onscroll = function() {
             const btn = document.getElementById('backToTop');
@@ -344,9 +373,7 @@
 
                 products = rows.slice(1).map(cols => {
                     let imgs = cols[7] ? cols[7].split(',').map(s => s.trim()) : ['https://via.placeholder.com/300'];
-                    let description = (cols[5] || '')
-                        .replace(/\\n/g, '\n')
-                        .replace(/\/n/g, '\n');
+                    let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
                     
                     return {
                         id: cols[0], cat: cols[1], name: cols[2], price: parseInt(cols[3]) || 0,
@@ -357,7 +384,6 @@
                 
                 renderShop();
 
-                // ПРАВКА: Скрыть прелоадер после отрисовки
                 const loader = document.getElementById('preloader');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
@@ -512,8 +538,7 @@
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
             }
-            updateUI();
-            renderShop();
+            updateUI(); renderShop();
             tg.HapticFeedback.selectionChanged();
         }
 
@@ -523,6 +548,32 @@
             document.getElementById('cartBadge').style.display = cCount > 0 ? 'block' : 'none';
             document.getElementById('wishBadge').innerText = wishlist.length;
             document.getElementById('wishBadge').style.display = wishlist.length > 0 ? 'block' : 'none';
+        }
+
+        function tab(name) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + name).classList.add('active');
+            if(name === 'cart') renderCart();
+            if(name === 'wishlist') renderWishlist();
+            window.scrollTo(0,0);
+        }
+
+        function renderWishlist() {
+            const grid = document.getElementById('wishlistGrid');
+            const favs = products.filter(p => wishlist.includes(p.id));
+            document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
+            grid.innerHTML = favs.map(p => {
+                const inCart = cart.find(c => c.id === p.id);
+                return `<div class="card">
+                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event)">❤</button>
+                    ${createGallery(p.imgList, p.id)}
+                    <div class="card-label" onclick="openModal('${p.id}')">
+                        <div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         function renderCart() {
@@ -548,10 +599,7 @@
                 const isLimit = item.qty >= p.stock;
                 return `
                 <div class="row-item">
-                    <div style="flex:1">
-                        <b>${item.name}</b><br>
-                        <small>${item.price * item.qty} ₽</small>
-                    </div>
+                    <div style="flex:1"><b>${item.name}</b><br><small>${item.price * item.qty} ₽</small></div>
                     <div style="display:flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                         <div style="display:flex; align-items:center; gap:10px">
                             <button onclick="changeQty(${idx}, -1)" style="border:none; width:28px; height:28px; border-radius:8px;">-</button>
@@ -574,57 +622,23 @@
             if(d > 0 && item.qty >= p.stock) return;
             item.qty += d;
             if(item.qty <= 0) cart.splice(idx, 1);
-            updateUI(); renderCart(); renderShop();
-        }
-
-        function renderWishlist() {
-            const favs = products.filter(p => wishlist.includes(p.id));
-            document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
-            document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
-                const inCart = cart.find(c => c.id === p.id);
-                const isLimit = inCart && inCart.qty >= p.stock;
-                return `<div class="card">
-                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
-                    <div style="height:160px" onclick="openModal('${p.id}')">
-                        <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
-                    </div>
-                    <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
-                    <button class="buy-btn" ${isLimit ? 'disabled' : ''} onclick="addToCart('${p.id}')">
-                        ${isLimit ? 'Лимит' : (inCart ? 'Добавить еще' : 'В корзину')}
-                    </button>
-                </div>`
-            }).join('');
+            renderCart(); updateUI();
+            tg.HapticFeedback.selectionChanged();
         }
 
         function checkout() {
-            let total = 0; let txt = "";
-            cart.forEach(i => { txt += `▪️ ${i.name} x${i.qty}\n`; total += i.price * i.qty; });
-            let ub = 0;
-            if(document.getElementById('useBonusesToggle').checked) {
-                ub = Math.min(userBalance, total);
-                total -= ub;
-            }
-            let details = `🌿 **ЗАКАЗ**\n${txt}${ub?`✨ Бонусы: ${ub}\n`:''}💰 **ИТОГО: ${total} ₽**`;
-            tg.sendData(JSON.stringify({ details: details, bonus_used: ub, final_sum: total }));
-            tg.close();
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const useB = document.getElementById('useBonusesToggle').checked;
+            const bUsed = useB ? Math.min(userBalance, total) : 0;
+            
+            const orderData = {
+                items: cart.map(i => ({n: i.name, q: i.qty, p: i.price})),
+                total: total - bUsed,
+                bonusUsed: bUsed,
+                userId: tg.initDataUnsafe?.user?.id || 'unknown'
+            };
+            tg.sendData(JSON.stringify(orderData));
         }
-
-        function tab(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('btn-' + id).classList.add('active');
-            if(id === 'cart') renderCart();
-            if(id === 'wishlist') renderWishlist();
-            window.scrollTo(0, 0);
-        }
-
-        window.onload = () => {
-            loadProducts();
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.getElementById('userIdDisplay').innerText = tg.initDataUnsafe.user.id;
-            }
-        };
     </script>
 </body>
 </html>
