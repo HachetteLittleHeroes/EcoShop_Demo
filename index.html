@@ -35,9 +35,19 @@
         .spinner { width: 40px; height: 40px; border: 4px solid var(--secondary); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Кнопка наверх */
+        #backToTop {
+            position: fixed; top: 15px; right: 15px; width: 35px; height: 35px;
+            background: var(--accent); color: white; border-radius: 50%;
+            display: none; align-items: center; justify-content: center;
+            z-index: 1001; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer; opacity: 0.8; transition: 0.3s;
+        }
+
         #mainContainer {
             width: 100%; height: 100%; overflow-y: auto;
-            padding-bottom: 100px; -webkit-overflow-scrolling: touch;
+            padding-bottom: 150px; /* ИСПРАВЛЕНО: увеличен отступ */
+            -webkit-overflow-scrolling: touch;
             touch-action: pan-y; overscroll-behavior-y: contain;
         }
 
@@ -104,7 +114,9 @@
         .rule-value { font-weight: 700; color: var(--accent); font-size: 14px; }
 
         .hits-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 20px; scroll-snap-type: x mandatory; }
-        .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
+        /* ИСПРАВЛЕНО: обновлен стиль карточки хитов для кнопок */
+        .hit-card { min-width: 280px; scroll-snap-align: start; background: var(--card-bg); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .hit-content { display: flex; cursor: pointer; }
         .hit-card img { width: 120px; height: 120px; object-fit: cover; }
         
         .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: rgba(253, 250, 247, 0.95); backdrop-filter: blur(10px); display: flex; border-top: 0.5px solid var(--secondary); z-index: 999; padding-bottom: env(safe-area-inset-bottom); }
@@ -125,6 +137,8 @@
     </style>
 </head>
 <body>
+    <div id="backToTop" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></div>
+
     <div id="loader">
         <div class="spinner"></div>
         <div style="font-weight:600; color:var(--accent);">Загружаем красоту...</div>
@@ -233,14 +247,37 @@
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
 
-        // --- НОВАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ ---
+        // --- ЛОГИКА КНОПКИ НАВЕРХ ---
+        const mainContainer = document.getElementById('mainContainer');
+        const btt = document.getElementById('backToTop');
+        mainContainer.onscroll = function() {
+            if (mainContainer.scrollTop > 300) { btt.style.display = 'flex'; } 
+            else { btt.style.display = 'none'; }
+        };
+        function scrollToTop() { mainContainer.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        // --- ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ КНОПОК УПРАВЛЕНИЯ (SHOP/WISH/HITS) ---
+        function getActionBlock(p) {
+            const inCart = cart.find(c => c.id === p.id);
+            if (p.stock < 1) return `<button class="buy-btn" disabled>Ожидается</button>`;
+            if (inCart) {
+                const isLimit = inCart.qty >= p.stock;
+                return `
+                    <div class="qty-control">
+                        <button class="qty-ctrl-btn" onclick="updateItemQty('${p.id}', -1)">–</button>
+                        <span class="qty-num" style="${isLimit ? 'color:var(--error); font-size:12px;' : ''}">${isLimit ? 'Лимит' : inCart.qty}</span>
+                        <button class="qty-ctrl-btn" ${isLimit ? 'disabled' : ''} onclick="updateItemQty('${p.id}', 1)">+</button>
+                    </div>`;
+            }
+            return `<button id="btn-add-${p.id}" class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>`;
+        }
+
         async function initApp() {
             try {
-                await loadProducts(); // Ждем загрузки товаров
+                await loadProducts();
             } catch (err) {
                 console.error("Ошибка при инициализации:", err);
             } finally {
-                // Скрываем лоадер в любом случае (даже если ошибка)
                 const loader = document.getElementById('loader');
                 if (loader) {
                     loader.style.opacity = '0';
@@ -330,6 +367,7 @@
             if(idx === -1) wishlist.push(id); else wishlist.splice(idx, 1);
             localStorage.setItem('ecoWishlist', JSON.stringify(wishlist));
             renderShop(); updateUI(); tg.HapticFeedback.selectionChanged();
+            if (document.getElementById('wishlist').classList.contains('active')) renderWishlist();
         }
 
         function openModal(id) {
@@ -380,34 +418,16 @@
             const renderGrid = (id, cat) => {
                 const items = filtered.filter(p => p.cat === cat);
                 document.getElementById(id).innerHTML = items.map(p => {
-                    const inCart = cart.find(c => c.id === p.id);
                     const isFav = wishlist.includes(p.id);
-                    const isOutOfStock = p.stock < 1;
-
-                    let actionBlock = '';
-                    if (isOutOfStock) {
-                        actionBlock = `<button class="buy-btn" disabled>Ожидается</button>`;
-                    } else if (inCart) {
-                        const isLimit = inCart.qty >= p.stock;
-                        actionBlock = `
-                            <div class="qty-control">
-                                <button class="qty-ctrl-btn" onclick="updateItemQty('${p.id}', -1)">–</button>
-                                <span class="qty-num" style="${isLimit ? 'color:var(--error); font-size:12px;' : ''}">${isLimit ? 'Лимит' : inCart.qty}</span>
-                                <button class="qty-ctrl-btn" ${isLimit ? 'disabled' : ''} onclick="updateItemQty('${p.id}', 1)">+</button>
-                            </div>`;
-                    } else {
-                        actionBlock = `<button id="btn-add-${p.id}" class="buy-btn" onclick="addToCart('${p.id}')">В корзину</button>`;
-                    }
-
                     return `<div class="card">
                         <button class="wishlist-btn ${isFav?'active':''}" onclick="toggleWish('${p.id}', event)">${isFav?'❤':'♡'}</button>
                         ${createGallery(p.imgList, p.id)}
                         <div class="card-label" onclick="openModal('${p.id}')">
                             <div class="card-name">${p.name}</div>
                             <div class="card-desc">${p.shortDesc}</div>
-                            <div class="card-price">${p.price} ₽ ${inCart ? `<span style="color:var(--accent); font-size:10px; margin-left:5px;">(${inCart.qty} шт)</span>` : ''}</div>
+                            <div class="card-price">${p.price} ₽</div>
                         </div>
-                        ${actionBlock}
+                        ${getActionBlock(p)}
                     </div>`;
                 }).join('');
             };
@@ -417,9 +437,15 @@
             if (hitsSection) {
                 hitsSection.style.display = (hits.length && query === '') ? 'block' : 'none';
                 document.getElementById('hitsGrid').innerHTML = hits.map(p => `
-                    <div class="hit-card" onclick="openModal('${p.id}')">
-                        <img src="${p.imgList[0]}">
-                        <div class="hit-info" style="padding:12px"><div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div></div>
+                    <div class="hit-card">
+                        <div class="hit-content" onclick="openModal('${p.id}')">
+                            <img src="${p.imgList[0]}">
+                            <div class="hit-info" style="padding:12px; flex:1;">
+                                <div class="card-name">${p.name}</div>
+                                <div class="card-price">${p.price} ₽</div>
+                            </div>
+                        </div>
+                        <div style="padding: 0 5px 5px;">${getActionBlock(p)}</div>
                     </div>`).join('');
             }
 
@@ -433,30 +459,21 @@
             if(inCart && inCart.qty >= p.stock) return;
             if(inCart) inCart.qty++; else cart.push({...p, qty: 1});
             
-            const btn = document.getElementById(`btn-add-${id}`);
-            if(btn) {
-                btn.innerText = "Добавлено!";
-                btn.classList.add('added');
-                setTimeout(() => { renderShop(); }, 400);
-            } else {
-                renderShop();
-            }
             updateUI();
+            renderShop();
+            if (document.getElementById('wishlist').classList.contains('active')) renderWishlist();
             tg.HapticFeedback.impactOccurred('light');
         }
 
         function updateItemQty(id, delta) {
             const itemIdx = cart.findIndex(x => x.id === id);
-            const p = products.find(x => x.id === id);
             if (itemIdx !== -1) {
-                if (delta > 0 && cart[itemIdx].qty >= p.stock) {
-                    return;
-                }
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
             }
             updateUI();
             renderShop();
+            if (document.getElementById('wishlist').classList.contains('active')) renderWishlist();
             tg.HapticFeedback.selectionChanged();
         }
 
@@ -530,17 +547,13 @@
             const favs = products.filter(p => wishlist.includes(p.id));
             document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
             document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
-                const inCart = cart.find(c => c.id === p.id);
-                const isLimit = inCart && inCart.qty >= p.stock;
                 return `<div class="card">
-                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
+                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event)">❤</button>
                     <div style="height:160px" onclick="openModal('${p.id}')">
                         <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
-                    <button class="buy-btn" ${isLimit ? 'disabled' : ''} onclick="addToCart('${p.id}')">
-                        ${isLimit ? 'Лимит' : (inCart ? 'Добавить еще' : 'В корзину')}
-                    </button>
+                    ${getActionBlock(p)}
                 </div>`
             }).join('');
         }
@@ -573,8 +586,6 @@
             userBalance = parseInt(params.get('balance')) || 0;
             document.getElementById('userBalanceDisplay').innerText = userBalance;
             document.getElementById('userIdDisplay').innerText = params.get('id') || "---";
-            
-            // Запускаем инициализацию (загрузку товаров и скрытие лоадера)
             initApp(); 
             updateUI();
         }
