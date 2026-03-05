@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -15,73 +15,44 @@
             --gray: #a6a6a6;
             --card-bg: #ffffff;
             --fav: #e74c3c;
-            --error: #e67e22;
-        }
-
-        html, body { 
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            overscroll-behavior-y: none; 
+            --error: #e67e22; /* Цвет для индикации лимита */
         }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            padding-bottom: 100px;
+            background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px;
             -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none;
-            user-select: none;
         }
-
-        /* ПРАВКА: Стили загрузчика */
-        #preloader {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            transition: opacity 0.5s ease;
-        }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--secondary);
-            border-top: 4px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* ПРАВКА: Скелетон-эффект */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-            border-radius: 15px;
-        }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         .header { padding: 25px 20px 10px; font-size: 26px; font-weight: 700; }
         .page { display: none; padding: 0 15px; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* Кнопка Наверх */
         #backToTop {
-            position: fixed; top: 20px; right: 20px; width: 40px; height: 40px;
-            background: rgba(253, 250, 247, 0.85); color: var(--accent);
-            border: 1px solid var(--secondary); border-radius: 50%;
-            display: none; align-items: center; justify-content: center; z-index: 1500;
-            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            backdrop-filter: blur(5px); transition: opacity 0.3s, transform 0.3s; font-size: 18px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(253, 250, 247, 0.85);
+            color: var(--accent);
+            border: 1px solid var(--secondary);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s, transform 0.3s;
+            font-size: 18px;
         }
         #backToTop:active { transform: scale(0.9); }
 
+        /* Фильтры */
         .filter-container { display: flex; gap: 10px; padding: 10px 0 20px; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; background: var(--bg); z-index: 100; }
         .filter-container::-webkit-scrollbar { display: none; }
         .filter-btn { padding: 10px 20px; border-radius: 25px; border: 1px solid var(--secondary); background: var(--card-bg); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; }
@@ -120,6 +91,7 @@
         .qty-control { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 0 0 20px 20px; height: 45px; overflow: hidden; }
         .qty-ctrl-btn { flex: 1; height: 100%; border: none; background: none; font-size: 18px; font-weight: bold; color: var(--text); cursor: pointer; }
         .qty-num { flex: 1; text-align: center; font-weight: 800; font-size: 15px; color: var(--accent); }
+        .qty-ctrl-btn:disabled { opacity: 0.3; }
 
         .buy-btn { background: var(--accent); color: var(--accent-text); border: none; padding: 12px; font-weight: 600; cursor: pointer; width: 100%; border-radius: 0 0 20px 20px; transition: 0.2s; height: 45px; }
         .buy-btn:disabled { background: var(--gray) !important; opacity: 0.6; }
@@ -173,11 +145,6 @@
 </head>
 <body>
 
-    <div id="preloader">
-        <div class="spinner"></div>
-        <div style="margin-top:15px; color:var(--accent); font-weight:600; font-size:14px">Загружаем магию...</div>
-    </div>
-
     <button id="backToTop" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
     <div id="shop" class="page active">
@@ -197,18 +164,12 @@
         
         <div id="section-candle" class="category-section">
             <div class="category-title">Свечи ручной работы</div>
-            <div id="candlesGrid" class="grid">
-                <div class="card"><div class="skeleton" style="height:160px"></div><div style="padding:12px"><div class="skeleton" style="height:15px; width:80%; margin-bottom:8px"></div><div class="skeleton" style="height:12px; width:40%"></div></div></div>
-                <div class="card"><div class="skeleton" style="height:160px"></div><div style="padding:12px"><div class="skeleton" style="height:15px; width:80%; margin-bottom:8px"></div><div class="skeleton" style="height:12px; width:40%"></div></div></div>
-            </div>
+            <div id="candlesGrid" class="grid"></div>
         </div>
 
         <div id="section-body" class="category-section">
             <div class="category-title">Уход и SPA</div>
-            <div id="bodyGrid" class="grid">
-                <div class="card"><div class="skeleton" style="height:160px"></div><div style="padding:12px"><div class="skeleton" style="height:15px; width:80%; margin-bottom:8px"></div><div class="skeleton" style="height:12px; width:40%"></div></div></div>
-                <div class="card"><div class="skeleton" style="height:160px"></div><div style="padding:12px"><div class="skeleton" style="height:15px; width:80%; margin-bottom:8px"></div><div class="skeleton" style="height:12px; width:40%"></div></div></div>
-            </div>
+            <div id="bodyGrid" class="grid"></div>
         </div>
     </div>
 
@@ -277,49 +238,16 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
+
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFMqZ4dB7Nwn-KL2Lj21hO6iJIq59hsMX1XJjxS9n7fFXy_7anW9MV4lcWWHMZiESX-Z0f1yMle3cB/pub?output=csv';
-        const BONUS_API_URL = 'https://script.google.com/macros/s/AKfycbwNzGJlazpBtq9gtnGkF7c6zMoSh-gnse4XkL6GWEaIirV0mF8ZliIw48HT6A7oV4cqyw/exec';
 
         let products = [];
         let cart = [];
         let wishlist = JSON.parse(localStorage.getItem('ecoWishlist')) || [];
         let userBalance = 0;
 
-        // ПРАВКА: Исправленный запуск с определением ID
-        window.onload = async () => {
-            tg.ready();
-            tg.expand();
-            
-            if (tg.isVerticalSwipesEnabled !== undefined) {
-                tg.isVerticalSwipesEnabled = false;
-            }
-
-            // Пытаемся получить ID и бонусы
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                document.getElementById('userIdDisplay').innerText = user.id;
-                await loadUserBalance(user.id);
-            }
-
-            // Загружаем товары
-            await loadProducts();
-        };
-
-        async function loadUserBalance(userId) {
-            try {
-                // ПРАВКА: Запрос к твоему скрипту для получения бонусов
-                const response = await fetch(`${BONUS_API_URL}?action=getBalance&userId=${userId}`);
-                const data = await response.json();
-                if (data.balance !== undefined) {
-                    userBalance = parseInt(data.balance) || 0;
-                    document.getElementById('userBalanceDisplay').innerText = userBalance;
-                    document.getElementById('availableBonuses').innerText = userBalance;
-                }
-            } catch (e) {
-                console.error("Бонусы не загружены:", e);
-            }
-        }
-
+        // Логика кнопки "Наверх"
         window.onscroll = function() {
             const btn = document.getElementById('backToTop');
             if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
@@ -373,7 +301,9 @@
 
                 products = rows.slice(1).map(cols => {
                     let imgs = cols[7] ? cols[7].split(',').map(s => s.trim()) : ['https://via.placeholder.com/300'];
-                    let description = (cols[5] || '').replace(/\\n/g, '\n').replace(/\/n/g, '\n');
+                    let description = (cols[5] || '')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\/n/g, '\n');
                     
                     return {
                         id: cols[0], cat: cols[1], name: cols[2], price: parseInt(cols[3]) || 0,
@@ -383,11 +313,6 @@
                 }).filter(p => p.id);
                 
                 renderShop();
-
-                const loader = document.getElementById('preloader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-
             } catch (e) { 
                 console.error("Ошибка загрузки данных:", e); 
             }
@@ -534,11 +459,14 @@
             const itemIdx = cart.findIndex(x => x.id === id);
             const p = products.find(x => x.id === id);
             if (itemIdx !== -1) {
-                if (delta > 0 && cart[itemIdx].qty >= p.stock) return;
+                if (delta > 0 && cart[itemIdx].qty >= p.stock) {
+                    return; 
+                }
                 cart[itemIdx].qty += delta;
                 if (cart[itemIdx].qty <= 0) cart.splice(itemIdx, 1);
             }
-            updateUI(); renderShop();
+            updateUI();
+            renderShop();
             tg.HapticFeedback.selectionChanged();
         }
 
@@ -548,32 +476,6 @@
             document.getElementById('cartBadge').style.display = cCount > 0 ? 'block' : 'none';
             document.getElementById('wishBadge').innerText = wishlist.length;
             document.getElementById('wishBadge').style.display = wishlist.length > 0 ? 'block' : 'none';
-        }
-
-        function tab(name) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(name).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + name).classList.add('active');
-            if(name === 'cart') renderCart();
-            if(name === 'wishlist') renderWishlist();
-            window.scrollTo(0,0);
-        }
-
-        function renderWishlist() {
-            const grid = document.getElementById('wishlistGrid');
-            const favs = products.filter(p => wishlist.includes(p.id));
-            document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
-            grid.innerHTML = favs.map(p => {
-                const inCart = cart.find(c => c.id === p.id);
-                return `<div class="card">
-                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event)">❤</button>
-                    ${createGallery(p.imgList, p.id)}
-                    <div class="card-label" onclick="openModal('${p.id}')">
-                        <div class="card-name">${p.name}</div><div class="card-price">${p.price} ₽</div>
-                    </div>
-                </div>`;
-            }).join('');
         }
 
         function renderCart() {
@@ -599,7 +501,10 @@
                 const isLimit = item.qty >= p.stock;
                 return `
                 <div class="row-item">
-                    <div style="flex:1"><b>${item.name}</b><br><small>${item.price * item.qty} ₽</small></div>
+                    <div style="flex:1">
+                        <b>${item.name}</b><br>
+                        <small>${item.price * item.qty} ₽</small>
+                    </div>
                     <div style="display:flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                         <div style="display:flex; align-items:center; gap:10px">
                             <button onclick="changeQty(${idx}, -1)" style="border:none; width:28px; height:28px; border-radius:8px;">-</button>
@@ -622,22 +527,57 @@
             if(d > 0 && item.qty >= p.stock) return;
             item.qty += d;
             if(item.qty <= 0) cart.splice(idx, 1);
-            renderCart(); updateUI();
-            tg.HapticFeedback.selectionChanged();
+            updateUI(); renderCart(); renderShop();
+        }
+
+        function renderWishlist() {
+            const favs = products.filter(p => wishlist.includes(p.id));
+            document.getElementById('wishlistEmpty').style.display = favs.length ? 'none' : 'block';
+            document.getElementById('wishlistGrid').innerHTML = favs.map(p => {
+                const inCart = cart.find(c => c.id === p.id);
+                const isLimit = inCart && inCart.qty >= p.stock;
+                return `<div class="card">
+                    <button class="wishlist-btn active" onclick="toggleWish('${p.id}', event); renderWishlist();">❤</button>
+                    <div style="height:160px" onclick="openModal('${p.id}')">
+                        <img src="${p.imgList[0]}" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="card-label" onclick="openModal('${p.id}')"><b>${p.name}</b><br>${p.price} ₽</div>
+                    <button class="buy-btn" ${isLimit ? 'disabled' : ''} onclick="addToCart('${p.id}')">
+                        ${isLimit ? 'Лимит' : (inCart ? 'Добавить еще' : 'В корзину')}
+                    </button>
+                </div>`
+            }).join('');
         }
 
         function checkout() {
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const useB = document.getElementById('useBonusesToggle').checked;
-            const bUsed = useB ? Math.min(userBalance, total) : 0;
-            
-            const orderData = {
-                items: cart.map(i => ({n: i.name, q: i.qty, p: i.price})),
-                total: total - bUsed,
-                bonusUsed: bUsed,
-                userId: tg.initDataUnsafe?.user?.id || 'unknown'
-            };
-            tg.sendData(JSON.stringify(orderData));
+            let total = 0; let txt = "";
+            cart.forEach(i => { txt += `▪️ ${i.name} x${i.qty}\n`; total += i.price * i.qty; });
+            let ub = 0;
+            if(document.getElementById('useBonusesToggle').checked) {
+                ub = Math.min(userBalance, total);
+                total -= ub;
+            }
+            let details = `🌿 **ЗАКАЗ**\n${txt}${ub?`✨ Бонусы: ${ub}\n`:''}💰 **ИТОГО: ${total} ₽**`;
+            tg.sendData(JSON.stringify({ details: details, bonus_used: ub, final_sum: total }));
+            tg.close();
+        }
+
+        function tab(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('active');
+            if(id === 'cart') renderCart();
+            if(id === 'wishlist') renderWishlist();
+            if(id === 'shop') renderShop();
+        }
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            userBalance = parseInt(params.get('balance')) || 0;
+            document.getElementById('userBalanceDisplay').innerText = userBalance;
+            document.getElementById('userIdDisplay').innerText = params.get('id') || "---";
+            loadProducts(); updateUI();
         }
     </script>
 </body>
